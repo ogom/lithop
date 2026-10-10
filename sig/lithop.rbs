@@ -1,0 +1,291 @@
+module Lithop
+  VERSION: String
+
+  class Error < StandardError
+  end
+
+  class ConfigurationError < Error
+  end
+
+  class InputError < Error
+  end
+
+  class Settings
+    attr_reader layout_profile: String
+    attr_reader width: Numeric
+    attr_reader height: Numeric
+    attr_reader margin_top: Numeric
+    attr_reader margin_right: Numeric
+    attr_reader margin_bottom: Numeric
+    attr_reader margin_left: Numeric
+    attr_reader image_fit: String
+    attr_reader crop_position_x: Numeric
+    attr_reader crop_position_y: Numeric
+    attr_reader crop_scale: Numeric
+    attr_reader minimum_thickness: Numeric
+    attr_reader maximum_thickness: Numeric
+    attr_reader pixel_size: Numeric
+    attr_reader color_pixel_size: Numeric?
+    attr_reader grid_columns: Integer?
+    attr_reader grid_rows: Integer?
+    attr_reader first_layer_height: Numeric
+    attr_reader layer_height: Numeric
+    attr_reader base_white_layers: Integer
+    attr_reader top_layer_height: Numeric?
+    attr_reader top_white_start: Numeric?
+    attr_reader minimum_top_white_layers: Integer
+    attr_reader exact_maximum_thickness: bool
+    attr_reader nozzle_diameter: Numeric
+    attr_reader color_model: String
+    attr_reader color_layer_count: Integer
+    attr_reader pigment_order: Array[Symbol]
+    attr_reader bambu_project: bool
+    attr_reader maximum_input_pixels: Integer
+    attr_reader maximum_triangles: Integer
+    attr_reader effective_minimum_thickness: Float
+    attr_reader effective_maximum_thickness: Float
+
+    def initialize: (**untyped values) -> void
+    def columns: () -> Integer
+    def rows: () -> Integer
+    def effective_color_pixel_size: () -> Numeric
+    def fitted_grid?: () -> bool
+    def pixel_size_x: () -> Float
+    def pixel_size_y: () -> Float
+    def estimated_triangles: () -> Integer
+    def triangle_limit_message: (String label, Integer triangle_count) -> String
+    def x_boundaries: () -> Array[Numeric]
+    def y_boundaries: () -> Array[Numeric]
+    def quantize_thickness: (Numeric value) -> Float
+    def margin_samples: () -> Hash[Symbol, Integer]
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class Palette
+    class Recipe < Data
+      attr_reader cyan: Integer
+      attr_reader magenta: Integer
+      attr_reader yellow: Integer
+      attr_reader white: Integer
+      attr_reader coverage_cmy: Array[Float]
+      attr_reader ordered_layers: Array[Symbol]
+
+      def layer_count: () -> Integer
+      def layers: () -> Array[Symbol]
+      def pigments: () -> Array[Symbol]
+      def to_h: () -> Hash[Symbol, untyped]
+    end
+
+    attr_reader layer_count: Integer
+    attr_reader pigment_order: Array[Symbol]
+    attr_reader recipes: Array[Recipe]
+
+    def initialize: (?layer_count: Integer, ?pigment_order: Array[Symbol]) -> void
+    def nearest: (Array[Numeric] cmy) -> Recipe
+    def display_color: (Recipe recipe) -> String
+  end
+
+  class MaterialModel
+    class Cell < Data
+      attr_reader height: Float
+      attr_reader recipe: Palette::Recipe
+      attr_reader materials: Array[Symbol]
+    end
+
+    attr_reader columns: Integer
+    attr_reader rows: Integer
+    attr_reader x_boundaries: Array[Numeric]
+    attr_reader y_boundaries: Array[Numeric]
+    attr_reader z_boundaries: Array[Float]
+    attr_reader cells: Array[Cell]
+
+    def initialize: (cmys: Array[Array[Numeric]], heights: Array[Numeric], settings: Settings, ?palette: Palette | Calibration::RecipeSelector, ?cell_cmys: Array[Array[Numeric]]?) -> void
+    def material_at: (Integer layer, Integer row, Integer column) -> Symbol?
+    def materials: () -> Array[Symbol]
+    def recipe_counts: () -> Hash[String, Integer]
+    def recipe_summaries: () -> Array[Hash[Symbol, untyped]]
+  end
+
+  module Calibration
+    class PatchMeasurement < Data
+      attr_reader patch_id: String
+      attr_reader recipe: Hash[String, Integer]
+      attr_reader height: Numeric
+      attr_reader transmitted_srgb: Array[Float]
+      attr_reader luminance: Float
+    end
+
+    class Target
+      class Patch < Data
+        attr_reader id: String
+        attr_reader kind: Symbol
+        attr_reader row: Integer
+        attr_reader column: Integer
+        attr_reader recipe: Palette::Recipe
+        attr_reader height: Float
+        attr_reader top_white_thickness: Float
+      end
+
+      attr_reader columns: Integer
+      attr_reader rows: Integer
+      attr_reader x_boundaries: Array[Float]
+      attr_reader y_boundaries: Array[Float]
+      attr_reader z_boundaries: Array[Float]
+      attr_reader cells: Array[MaterialModel::Cell]
+      attr_reader patches: Array[Patch]
+      attr_reader recipe_patches: Array[Patch]
+      attr_reader white_patches: Array[Patch]
+
+      def initialize: (settings: Settings) -> void
+      def material_at: (Integer layer, Integer row, Integer column) -> Symbol?
+      def materials: () -> Array[Symbol]
+      def width: () -> Float
+      def height: () -> Float
+    end
+
+    module TargetSVG
+      def self.write: (String path, Target target) -> Integer
+      def self.document: (Target target) -> String
+    end
+
+    class Profile
+      attr_reader data: Hash[String, untyped]
+
+      def self.template: (profile_id: String, settings: Settings, target: Target) -> Profile
+      def self.load: (String path) -> Profile
+      def self.structure_for: (Settings settings) -> Hash[String, untyped]
+      def initialize: (Hash[String, untyped] data) -> void
+      def write: (String path) -> Integer
+      def validate_for!: (Settings settings) -> bool
+      def profile_id: () -> String
+      def status: () -> String
+      def measurements: (String | Symbol kind) -> Array[PatchMeasurement]
+      def validate_complete!: () -> bool
+    end
+
+    class RecipeSelector
+      attr_reader layer_count: Integer
+      attr_reader pigment_order: Array[Symbol]
+      attr_reader recipes: Array[Palette::Recipe]
+
+      def initialize: (profile: Profile, palette: Palette) -> void
+      def nearest: (Array[Numeric] cmy) -> Palette::Recipe
+    end
+
+    class ThicknessSelector
+      def initialize: (profile: Profile, settings: Settings) -> void
+      def call: (Array[Numeric] densities) -> Array[Float]
+    end
+
+    class Export
+      class Result < Data
+        attr_reader job_id: String
+        attr_reader path: String
+        attr_reader files: Array[String]
+        attr_reader triangle_count: Integer
+        attr_reader patch_count: Integer
+      end
+
+      def initialize: (settings: Settings, project_dir: String, ?clock: untyped, ?random: untyped) -> void
+      def call: () -> Result
+    end
+  end
+
+  class VoxelGeometry
+    class Vertex < Data
+      attr_reader x: Numeric
+      attr_reader y: Numeric
+      attr_reader z: Numeric
+      attr_reader topology: untyped
+
+      def coordinates: () -> Array[Numeric]
+    end
+
+    def initialize: (model: MaterialModel | Calibration::Target, material: Symbol) -> void
+    def each_triangle: () -> Enumerable[Array[Vertex]]
+    def triangle_count: () -> Integer
+  end
+
+  module FilamentProfile
+    class Material < Data
+      attr_reader channel: Symbol
+      attr_reader name: String
+      attr_reader color_code: String
+      attr_reader display_color: String
+      attr_reader diameter_mm: Float
+
+      def to_h: () -> Hash[Symbol, untyped]
+    end
+
+    class Profile < Data
+      attr_reader id: String
+      attr_reader name: String
+      attr_reader manufacturer: String
+      attr_reader product_url: String
+      attr_reader reference_url: String
+      attr_reader materials: Array[Material]
+
+      def to_h: () -> Hash[Symbol, untyped]
+    end
+
+    class DisplaySample < Data
+      attr_reader cmy: Array[Float]
+      attr_reader density: Float
+    end
+
+    def self.default: () -> Profile
+    def self.display_sample: (Array[Float] rgb) -> DisplaySample?
+    def self.display_cmy: (Array[Float] rgb) -> Array[Float]?
+    def self.validate!: (Profile profile) -> bool
+  end
+
+  class ThreeMF
+    class Part < Data
+      attr_reader material: Symbol
+      attr_reader triangles: Enumerable[untyped]
+    end
+
+    class Result < Data
+      attr_reader vertex_count: Integer
+      attr_reader triangle_count: Integer
+      attr_reader material_count: Integer
+      attr_reader object_count: Integer
+      attr_reader triangle_counts_by_material: Hash[Symbol, Integer]
+    end
+
+    def self.write: (String path, parts: Array[Part], ?profile: FilamentProfile::Profile, ?instrumentation: untyped, ?settings: Settings?) -> Result
+  end
+
+  class ExportResult < Data
+    attr_reader job_id: String
+    attr_reader path: String
+    attr_reader files: Array[String]
+    attr_reader triangle_count: Integer
+    attr_reader three_mf_triangle_count: Integer
+    attr_reader material_count: Integer
+    attr_reader object_count: Integer
+  end
+
+  class Export
+    class CalibrationInput < Data
+      attr_reader profile: Calibration::Profile
+      attr_reader path: String
+    end
+
+    def initialize: (
+      settings: Settings,
+      project_dir: String,
+      ?input_settings_path: String?,
+      ?calibration: CalibrationInput?,
+      ?progress: untyped,
+      ?instrumentation: untyped,
+      ?clock: untyped,
+      ?random: untyped
+    ) -> void
+    def call: (String input_path) -> ExportResult
+  end
+
+  class CLI
+    def self.run: (Array[String] argv, ?out: untyped, ?err: untyped, ?cwd: String) -> Integer
+  end
+end

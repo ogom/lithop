@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104" role="img" aria-labelledby="title desc">
+  <title id="title">CMY配合・明暗チャート</title>
+  <desc id="desc">横方向はCMY材料の配合とCMY黒、縦方向は0%から100%までの明暗を表します。</desc>
+  <defs>
+    <style>
+      .cyan-magenta-50-100 { fill: #760081; }
+      .cyan-magenta-100-100 { fill: #000075; }
+      .cyan-magenta-100-50 { fill: #0043a6; }
+      .cyan-100 { fill: #0086d6; }
+      .cyan-yellow-100-50 { fill: #007f6b; }
+      .cyan-yellow-100-100 { fill: #007700; }
+      .cyan-yellow-50-100 { fill: #7ead00; }
+      .yellow-100 { fill: #fce300; }
+      .magenta-yellow-50-100 { fill: #f37200; }
+      .magenta-yellow-100-100 { fill: #e90000; }
+      .magenta-yellow-100-50 { fill: #eb0046; }
+      .magenta-100 { fill: #ec008c; }
+      .cmy-black { fill: #101820; }
+      .header-label {
+        fill: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 1.65px;
+        font-weight: 700;
+        text-anchor: middle;
+      }
+      .header-label-dark { fill: #111; }
+      .density-label {
+        fill: #111;
+        font-family: Arial, sans-serif;
+        font-size: 2.6px;
+        text-anchor: start;
+        dominant-baseline: middle;
+      }
+    </style>
+    <g id="swatches">
+      <rect class="cyan-magenta-50-100" x="2" y="0" width="9" height="6.5"/>
+      <rect class="cyan-magenta-100-100" x="11.3" y="0" width="9" height="6.5"/>
+      <rect class="cyan-magenta-100-50" x="20.6" y="0" width="9" height="6.5"/>
+      <rect class="cyan-100" x="29.9" y="0" width="9" height="6.5"/>
+      <rect class="cyan-yellow-100-50" x="39.2" y="0" width="9" height="6.5"/>
+      <rect class="cyan-yellow-100-100" x="48.5" y="0" width="9" height="6.5"/>
+      <rect class="cyan-yellow-50-100" x="57.8" y="0" width="9" height="6.5"/>
+      <rect class="yellow-100" x="67.1" y="0" width="9" height="6.5"/>
+      <rect class="magenta-yellow-50-100" x="76.4" y="0" width="9" height="6.5"/>
+      <rect class="magenta-yellow-100-100" x="85.7" y="0" width="9" height="6.5"/>
+      <rect class="magenta-yellow-100-50" x="95" y="0" width="9" height="6.5"/>
+      <rect class="magenta-100" x="104.3" y="0" width="9" height="6.5"/>
+      <rect class="cmy-black" x="113.6" y="0" width="9" height="6.5"/>
+    </g>
+  </defs>
+
+  <rect width="140" height="104" fill="#fff"/>
+  <g transform="scale(1.076923076923077 1.04)">
+
+  <g id="recipe-labels">
+    <use href="#swatches" y="2"/>
+    <g class="header-label">
+      <text x="6.5" y="4.1"><tspan x="6.5">C50</tspan><tspan x="6.5" dy="1.8">+</tspan><tspan x="6.5" dy="1.8">M100</tspan></text>
+      <text x="15.8" y="4.1"><tspan x="15.8">C100</tspan><tspan x="15.8" dy="1.8">+</tspan><tspan x="15.8" dy="1.8">M100</tspan></text>
+      <text x="25.1" y="4.1"><tspan x="25.1">C100</tspan><tspan x="25.1" dy="1.8">+</tspan><tspan x="25.1" dy="1.8">M50</tspan></text>
+      <text x="34.4" y="6.1">C100</text>
+      <text x="43.7" y="4.1"><tspan x="43.7">C100</tspan><tspan x="43.7" dy="1.8">+</tspan><tspan x="43.7" dy="1.8">Y50</tspan></text>
+      <text x="53" y="4.1"><tspan x="53">C100</tspan><tspan x="53" dy="1.8">+</tspan><tspan x="53" dy="1.8">Y100</tspan></text>
+      <text class="header-label-dark" x="62.3" y="4.1"><tspan x="62.3">C50</tspan><tspan x="62.3" dy="1.8">+</tspan><tspan x="62.3" dy="1.8">Y100</tspan></text>
+      <text class="header-label-dark" x="71.6" y="6.1">Y100</text>
+      <text x="80.9" y="4.1"><tspan x="80.9">M50</tspan><tspan x="80.9" dy="1.8">+</tspan><tspan x="80.9" dy="1.8">Y100</tspan></text>
+      <text x="90.2" y="4.1"><tspan x="90.2">M100</tspan><tspan x="90.2" dy="1.8">+</tspan><tspan x="90.2" dy="1.8">Y100</tspan></text>
+      <text x="99.5" y="4.1"><tspan x="99.5">M100</tspan><tspan x="99.5" dy="1.8">+</tspan><tspan x="99.5" dy="1.8">Y50</tspan></text>
+      <text x="108.8" y="6.1">M100</text>
+      <text x="118.1" y="3.5"><tspan x="118.1">C100</tspan><tspan x="118.1" dy="1.55">M100</tspan><tspan x="118.1" dy="1.55">Y100</tspan><tspan x="118.1" dy="1.55">BLACK</tspan></text>
+    </g>
+  </g>
+
+  <!-- Column colors encode fixed CMY recipes; row opacity independently encodes brightness. -->
+  <g id="density-0" opacity="0"><use href="#swatches" y="14"/></g>
+  <g id="density-5" opacity=".05"><use href="#swatches" y="21"/></g>
+  <g id="density-10" opacity=".1"><use href="#swatches" y="28"/></g>
+  <g id="density-20" opacity=".2"><use href="#swatches" y="35"/></g>
+  <g id="density-30" opacity=".3"><use href="#swatches" y="42"/></g>
+  <g id="density-40" opacity=".4"><use href="#swatches" y="49"/></g>
+  <g id="density-50" opacity=".5"><use href="#swatches" y="56"/></g>
+  <g id="density-60" opacity=".6"><use href="#swatches" y="63"/></g>
+  <g id="density-70" opacity=".7"><use href="#swatches" y="70"/></g>
+  <g id="density-80" opacity=".8"><use href="#swatches" y="77"/></g>
+  <g id="density-90" opacity=".9"><use href="#swatches" y="84"/></g>
+  <g id="density-100"><use href="#swatches" y="91"/></g>
+
+  <g class="density-label" aria-label="明暗パーセント">
+    <text x="124" y="17.25">0</text>
+    <text x="124" y="24.25">5</text>
+    <text x="124" y="31.25">10</text>
+    <text x="124" y="38.25">20</text>
+    <text x="124" y="45.25">30</text>
+    <text x="124" y="52.25">40</text>
+    <text x="124" y="59.25">50</text>
+    <text x="124" y="66.25">60</text>
+    <text x="124" y="73.25">70</text>
+    <text x="124" y="80.25">80</text>
+    <text x="124" y="87.25">90</text>
+    <text x="124" y="94.25">100</text>
+  </g>
+  </g>
+</svg>

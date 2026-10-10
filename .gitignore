@@ -1,11 +1,29 @@
+# macOS metadata
+.DS_Store
+
+# Bundler
 /.bundle/
+
+# Generated documentation and local development notes
 /.yardoc
 /_yardoc/
-/coverage/
 /doc/
-/pkg/
+
+# Test and analysis output
+/coverage/
 /spec/reports/
 /tmp/
+/.rspec_status
 
-# rspec failure tracking
-.rspec_status
+# Packaged gems
+/pkg/
+/*.gem
+
+# Lithop-generated model output
+/build/
+
+# Local settings
+/config/settings.json
+
+# Local Bambu Studio result
+/result.json

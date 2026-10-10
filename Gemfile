@@ -2,12 +2,12 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in ukisae.gemspec
+# Specify the gem's dependencies in lithop.gemspec
 gemspec
 
-gem "irb"
-gem "rake", "~> 13.0"
+gem "irb", "~> 1.18"
+gem "rake", "~> 13.4"
+gem "rbs", "~> 4.2"
+gem "rspec", "~> 3.13"
 
-gem "rspec", "~> 3.0"
-
-gem "rubocop", "~> 1.21"
+gem "rubocop", "~> 1.91"

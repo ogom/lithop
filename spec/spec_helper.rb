@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
-require "ukisae"
+require "tmpdir"
+require "lithop"
+require_relative "support/calibration_profile_helpers"
 
 RSpec.configure do |config|
-  # Enable flags like --only-failures and --next-failure
-  config.example_status_persistence_file_path = ".rspec_status"
-
-  # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
-
-  config.expect_with :rspec do |c|
-    c.syntax = :expect
-  end
+  config.expect_with(:rspec) { |expectations| expectations.syntax = :expect }
+  config.order = :random
+  config.include CalibrationProfileHelpers
+  Kernel.srand config.seed
 end

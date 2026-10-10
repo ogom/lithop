@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104"
+     role="img" aria-labelledby="title desc">
+  <title id="title">CMY fine-line evaluation target</title>
+  <desc id="desc">Horizontal, vertical, diagonal, and separated CMY lines from 0.2 to 1.2 mm.</desc>
+  <rect width="140" height="104" fill="#FFFFFF"/>
+  <g transform="translate(5 2)">
+
+  <g font-family="sans-serif" font-size="2.4" fill="#333333">
+    <text x="4" y="5">CMY FINE LINE / 0.2 0.3 0.4 0.5 0.6 0.8 1.0 1.2 mm</text>
+  </g>
+
+  <g fill="none" stroke-linecap="butt">
+    <g stroke="#0086D6">
+      <path d="M4 11H60" stroke-width="0.2"/><path d="M4 14H60" stroke-width="0.3"/>
+      <path d="M4 17H60" stroke-width="0.4"/><path d="M4 20H60" stroke-width="0.5"/>
+      <path d="M4 23H60" stroke-width="0.6"/><path d="M4 26H60" stroke-width="0.8"/>
+      <path d="M4 29H60" stroke-width="1.0"/><path d="M4 32H60" stroke-width="1.2"/>
+    </g>
+    <g stroke="#EC008C">
+      <path d="M66 11H126" stroke-width="0.2"/><path d="M66 14H126" stroke-width="0.3"/>
+      <path d="M66 17H126" stroke-width="0.4"/><path d="M66 20H126" stroke-width="0.5"/>
+      <path d="M66 23H126" stroke-width="0.6"/><path d="M66 26H126" stroke-width="0.8"/>
+      <path d="M66 29H126" stroke-width="1.0"/><path d="M66 32H126" stroke-width="1.2"/>
+    </g>
+    <g stroke="#FCE300">
+      <path d="M8 38V68" stroke-width="0.2"/><path d="M14 38V68" stroke-width="0.3"/>
+      <path d="M20 38V68" stroke-width="0.4"/><path d="M26 38V68" stroke-width="0.5"/>
+      <path d="M32 38V68" stroke-width="0.6"/><path d="M38 38V68" stroke-width="0.8"/>
+      <path d="M44 38V68" stroke-width="1.0"/><path d="M50 38V68" stroke-width="1.2"/>
+    </g>
+    <g stroke="#5A4B28">
+      <path d="M58 68L76 38" stroke-width="0.2"/><path d="M65 68L83 38" stroke-width="0.3"/>
+      <path d="M72 68L90 38" stroke-width="0.4"/><path d="M79 68L97 38" stroke-width="0.5"/>
+      <path d="M86 68L104 38" stroke-width="0.6"/><path d="M93 68L111 38" stroke-width="0.8"/>
+      <path d="M100 68L118 38" stroke-width="1.0"/><path d="M107 68L125 38" stroke-width="1.2"/>
+    </g>
+  </g>
+
+  <g>
+    <rect x="4" y="75" width="38" height="20" fill="#0086D6"/>
+    <rect x="46" y="75" width="38" height="20" fill="#EC008C"/>
+    <rect x="88" y="75" width="38" height="20" fill="#FCE300"/>
+    <g fill="#FFFFFF">
+      <path d="M8 79H38V79.4H8ZM8 83H38V83.6H8ZM8 87H38V88H8ZM8 91H38V92.2H8Z"/>
+      <path d="M50 79H80V79.4H50ZM50 83H80V83.6H50ZM50 87H80V88H50ZM50 91H80V92.2H50Z"/>
+      <path d="M92 79H122V79.4H92ZM92 83H122V83.6H92ZM92 87H122V88H92ZM92 91H122V92.2H92Z"/>
+    </g>
+  </g>
+  </g>
+</svg>

@@ -1,0 +1,872 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104"
+     role="img" aria-labelledby="title desc">
+  <title id="title">CMYW calibration target</title>
+  <desc id="desc">56 CMYW recipes, eight White thickness stages, and a right orientation column.</desc>
+  <rect width="140" height="104" fill="#fff"/>
+  <g class="patch recipe" id="R000">
+    <rect x="0" y="0" width="8.75" height="11.555556"
+          fill="#FFFFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R000</text>
+  </g>
+  <g class="patch recipe" id="R001">
+    <rect x="8.75" y="0" width="8.75" height="11.555556"
+          fill="#FFFFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R001</text>
+  </g>
+  <g class="patch recipe" id="R002">
+    <rect x="17.5" y="0" width="8.75" height="11.555556"
+          fill="#FFFFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R002</text>
+  </g>
+  <g class="patch recipe" id="R003">
+    <rect x="26.25" y="0" width="8.75" height="11.555556"
+          fill="#FFFF92" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R003</text>
+  </g>
+  <g class="patch recipe" id="R004">
+    <rect x="35" y="0" width="8.75" height="11.555556"
+          fill="#FFFF6D" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R004</text>
+  </g>
+  <g class="patch recipe" id="R005">
+    <rect x="43.75" y="0" width="8.75" height="11.555556"
+          fill="#FFFF49" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R005</text>
+  </g>
+  <g class="patch recipe" id="R006">
+    <rect x="52.5" y="0" width="8.75" height="11.555556"
+          fill="#FFFF24" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R006</text>
+  </g>
+  <g class="patch recipe" id="R007">
+    <rect x="61.25" y="0" width="8.75" height="11.555556"
+          fill="#FFFF00" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R007</text>
+  </g>
+  <g class="patch recipe" id="R008">
+    <rect x="70" y="0" width="8.75" height="11.555556"
+          fill="#FFDBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R008</text>
+  </g>
+  <g class="patch recipe" id="R009">
+    <rect x="78.75" y="0" width="8.75" height="11.555556"
+          fill="#FFDBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R009</text>
+  </g>
+  <g class="patch recipe" id="R010">
+    <rect x="87.5" y="0" width="8.75" height="11.555556"
+          fill="#FFDBB6" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R010</text>
+  </g>
+  <g class="patch recipe" id="R011">
+    <rect x="96.25" y="0" width="8.75" height="11.555556"
+          fill="#FFDB92" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R011</text>
+  </g>
+  <g class="patch recipe" id="R012">
+    <rect x="105" y="0" width="8.75" height="11.555556"
+          fill="#FFDB6D" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R012</text>
+  </g>
+  <g class="patch recipe" id="R013">
+    <rect x="113.75" y="0" width="8.75" height="11.555556"
+          fill="#FFDB49" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R013</text>
+  </g>
+  <g class="patch recipe" id="R014">
+    <rect x="122.5" y="0" width="8.75" height="11.555556"
+          fill="#FFDB24" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R014</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="0" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="5.777778" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">TOP</text>
+  </g>
+  <g class="patch recipe" id="R015">
+    <rect x="0" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R015</text>
+  </g>
+  <g class="patch recipe" id="R016">
+    <rect x="8.75" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB6DB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R016</text>
+  </g>
+  <g class="patch recipe" id="R017">
+    <rect x="17.5" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB6B6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R017</text>
+  </g>
+  <g class="patch recipe" id="R018">
+    <rect x="26.25" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB692" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R018</text>
+  </g>
+  <g class="patch recipe" id="R019">
+    <rect x="35" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB66D" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R019</text>
+  </g>
+  <g class="patch recipe" id="R020">
+    <rect x="43.75" y="11.555556" width="8.75" height="11.555556"
+          fill="#FFB649" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R020</text>
+  </g>
+  <g class="patch recipe" id="R021">
+    <rect x="52.5" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF92FF" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R021</text>
+  </g>
+  <g class="patch recipe" id="R022">
+    <rect x="61.25" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF92DB" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R022</text>
+  </g>
+  <g class="patch recipe" id="R023">
+    <rect x="70" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF92B6" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R023</text>
+  </g>
+  <g class="patch recipe" id="R024">
+    <rect x="78.75" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF9292" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R024</text>
+  </g>
+  <g class="patch recipe" id="R025">
+    <rect x="87.5" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF926D" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R025</text>
+  </g>
+  <g class="patch recipe" id="R026">
+    <rect x="96.25" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF6DFF" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R026</text>
+  </g>
+  <g class="patch recipe" id="R027">
+    <rect x="105" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF6DDB" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R027</text>
+  </g>
+  <g class="patch recipe" id="R028">
+    <rect x="113.75" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF6DB6" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R028</text>
+  </g>
+  <g class="patch recipe" id="R029">
+    <rect x="122.5" y="11.555556" width="8.75" height="11.555556"
+          fill="#FF6D92" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R029</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="11.555556" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="17.333333" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R030">
+    <rect x="0" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF49FF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R030</text>
+  </g>
+  <g class="patch recipe" id="R031">
+    <rect x="8.75" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF49DB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R031</text>
+  </g>
+  <g class="patch recipe" id="R032">
+    <rect x="17.5" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF49B6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R032</text>
+  </g>
+  <g class="patch recipe" id="R033">
+    <rect x="26.25" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF24FF" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="28.888889" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R033</text>
+  </g>
+  <g class="patch recipe" id="R034">
+    <rect x="35" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF24DB" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="28.888889" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R034</text>
+  </g>
+  <g class="patch recipe" id="R035">
+    <rect x="43.75" y="23.111111" width="8.75" height="11.555556"
+          fill="#FF00FF" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="28.888889" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R035</text>
+  </g>
+  <g class="patch recipe" id="R036">
+    <rect x="52.5" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R036</text>
+  </g>
+  <g class="patch recipe" id="R037">
+    <rect x="61.25" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R037</text>
+  </g>
+  <g class="patch recipe" id="R038">
+    <rect x="70" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R038</text>
+  </g>
+  <g class="patch recipe" id="R039">
+    <rect x="78.75" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFF92" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R039</text>
+  </g>
+  <g class="patch recipe" id="R040">
+    <rect x="87.5" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFF6D" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R040</text>
+  </g>
+  <g class="patch recipe" id="R041">
+    <rect x="96.25" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFF49" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R041</text>
+  </g>
+  <g class="patch recipe" id="R042">
+    <rect x="105" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBFF24" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R042</text>
+  </g>
+  <g class="patch recipe" id="R043">
+    <rect x="113.75" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBDBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R043</text>
+  </g>
+  <g class="patch recipe" id="R044">
+    <rect x="122.5" y="23.111111" width="8.75" height="11.555556"
+          fill="#DBDBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R044</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="23.111111" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="28.888889" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R045">
+    <rect x="0" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBDBB6" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R045</text>
+  </g>
+  <g class="patch recipe" id="R046">
+    <rect x="8.75" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBDB92" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R046</text>
+  </g>
+  <g class="patch recipe" id="R047">
+    <rect x="17.5" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBDB6D" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R047</text>
+  </g>
+  <g class="patch recipe" id="R048">
+    <rect x="26.25" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBDB49" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R048</text>
+  </g>
+  <g class="patch recipe" id="R049">
+    <rect x="35" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBB6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R049</text>
+  </g>
+  <g class="patch recipe" id="R050">
+    <rect x="43.75" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBB6DB" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R050</text>
+  </g>
+  <g class="patch recipe" id="R051">
+    <rect x="52.5" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBB6B6" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R051</text>
+  </g>
+  <g class="patch recipe" id="R052">
+    <rect x="61.25" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBB692" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R052</text>
+  </g>
+  <g class="patch recipe" id="R053">
+    <rect x="70" y="34.666667" width="8.75" height="11.555556"
+          fill="#DBB66D" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R053</text>
+  </g>
+  <g class="patch recipe" id="R054">
+    <rect x="78.75" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB92FF" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R054</text>
+  </g>
+  <g class="patch recipe" id="R055">
+    <rect x="87.5" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB92DB" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R055</text>
+  </g>
+  <g class="patch recipe" id="R056">
+    <rect x="96.25" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB92B6" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R056</text>
+  </g>
+  <g class="patch recipe" id="R057">
+    <rect x="105" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB9292" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R057</text>
+  </g>
+  <g class="patch recipe" id="R058">
+    <rect x="113.75" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB6DFF" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R058</text>
+  </g>
+  <g class="patch recipe" id="R059">
+    <rect x="122.5" y="34.666667" width="8.75" height="11.555556"
+          fill="#DB6DDB" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R059</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="34.666667" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="40.444444" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R060">
+    <rect x="0" y="46.222222" width="8.75" height="11.555556"
+          fill="#DB6DB6" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R060</text>
+  </g>
+  <g class="patch recipe" id="R061">
+    <rect x="8.75" y="46.222222" width="8.75" height="11.555556"
+          fill="#DB49FF" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R061</text>
+  </g>
+  <g class="patch recipe" id="R062">
+    <rect x="17.5" y="46.222222" width="8.75" height="11.555556"
+          fill="#DB49DB" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R062</text>
+  </g>
+  <g class="patch recipe" id="R063">
+    <rect x="26.25" y="46.222222" width="8.75" height="11.555556"
+          fill="#DB24FF" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="52" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R063</text>
+  </g>
+  <g class="patch recipe" id="R064">
+    <rect x="35" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R064</text>
+  </g>
+  <g class="patch recipe" id="R065">
+    <rect x="43.75" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R065</text>
+  </g>
+  <g class="patch recipe" id="R066">
+    <rect x="52.5" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R066</text>
+  </g>
+  <g class="patch recipe" id="R067">
+    <rect x="61.25" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FF92" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R067</text>
+  </g>
+  <g class="patch recipe" id="R068">
+    <rect x="70" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FF6D" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R068</text>
+  </g>
+  <g class="patch recipe" id="R069">
+    <rect x="78.75" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6FF49" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R069</text>
+  </g>
+  <g class="patch recipe" id="R070">
+    <rect x="87.5" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6DBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R070</text>
+  </g>
+  <g class="patch recipe" id="R071">
+    <rect x="96.25" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6DBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R071</text>
+  </g>
+  <g class="patch recipe" id="R072">
+    <rect x="105" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6DBB6" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R072</text>
+  </g>
+  <g class="patch recipe" id="R073">
+    <rect x="113.75" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6DB92" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R073</text>
+  </g>
+  <g class="patch recipe" id="R074">
+    <rect x="122.5" y="46.222222" width="8.75" height="11.555556"
+          fill="#B6DB6D" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R074</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="46.222222" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="52" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R075">
+    <rect x="0" y="57.777778" width="8.75" height="11.555556"
+          fill="#B6B6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R075</text>
+  </g>
+  <g class="patch recipe" id="R076">
+    <rect x="8.75" y="57.777778" width="8.75" height="11.555556"
+          fill="#B6B6DB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R076</text>
+  </g>
+  <g class="patch recipe" id="R077">
+    <rect x="17.5" y="57.777778" width="8.75" height="11.555556"
+          fill="#B6B6B6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R077</text>
+  </g>
+  <g class="patch recipe" id="R078">
+    <rect x="26.25" y="57.777778" width="8.75" height="11.555556"
+          fill="#B6B692" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R078</text>
+  </g>
+  <g class="patch recipe" id="R079">
+    <rect x="35" y="57.777778" width="8.75" height="11.555556"
+          fill="#B692FF" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R079</text>
+  </g>
+  <g class="patch recipe" id="R080">
+    <rect x="43.75" y="57.777778" width="8.75" height="11.555556"
+          fill="#B692DB" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R080</text>
+  </g>
+  <g class="patch recipe" id="R081">
+    <rect x="52.5" y="57.777778" width="8.75" height="11.555556"
+          fill="#B692B6" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R081</text>
+  </g>
+  <g class="patch recipe" id="R082">
+    <rect x="61.25" y="57.777778" width="8.75" height="11.555556"
+          fill="#B66DFF" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R082</text>
+  </g>
+  <g class="patch recipe" id="R083">
+    <rect x="70" y="57.777778" width="8.75" height="11.555556"
+          fill="#B66DDB" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R083</text>
+  </g>
+  <g class="patch recipe" id="R084">
+    <rect x="78.75" y="57.777778" width="8.75" height="11.555556"
+          fill="#B649FF" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="63.555556" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R084</text>
+  </g>
+  <g class="patch recipe" id="R085">
+    <rect x="87.5" y="57.777778" width="8.75" height="11.555556"
+          fill="#92FFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R085</text>
+  </g>
+  <g class="patch recipe" id="R086">
+    <rect x="96.25" y="57.777778" width="8.75" height="11.555556"
+          fill="#92FFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R086</text>
+  </g>
+  <g class="patch recipe" id="R087">
+    <rect x="105" y="57.777778" width="8.75" height="11.555556"
+          fill="#92FFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R087</text>
+  </g>
+  <g class="patch recipe" id="R088">
+    <rect x="113.75" y="57.777778" width="8.75" height="11.555556"
+          fill="#92FF92" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R088</text>
+  </g>
+  <g class="patch recipe" id="R089">
+    <rect x="122.5" y="57.777778" width="8.75" height="11.555556"
+          fill="#92FF6D" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R089</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="57.777778" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="63.555556" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R090">
+    <rect x="0" y="69.333333" width="8.75" height="11.555556"
+          fill="#92DBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R090</text>
+  </g>
+  <g class="patch recipe" id="R091">
+    <rect x="8.75" y="69.333333" width="8.75" height="11.555556"
+          fill="#92DBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R091</text>
+  </g>
+  <g class="patch recipe" id="R092">
+    <rect x="17.5" y="69.333333" width="8.75" height="11.555556"
+          fill="#92DBB6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R092</text>
+  </g>
+  <g class="patch recipe" id="R093">
+    <rect x="26.25" y="69.333333" width="8.75" height="11.555556"
+          fill="#92DB92" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R093</text>
+  </g>
+  <g class="patch recipe" id="R094">
+    <rect x="35" y="69.333333" width="8.75" height="11.555556"
+          fill="#92B6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R094</text>
+  </g>
+  <g class="patch recipe" id="R095">
+    <rect x="43.75" y="69.333333" width="8.75" height="11.555556"
+          fill="#92B6DB" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R095</text>
+  </g>
+  <g class="patch recipe" id="R096">
+    <rect x="52.5" y="69.333333" width="8.75" height="11.555556"
+          fill="#92B6B6" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R096</text>
+  </g>
+  <g class="patch recipe" id="R097">
+    <rect x="61.25" y="69.333333" width="8.75" height="11.555556"
+          fill="#9292FF" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R097</text>
+  </g>
+  <g class="patch recipe" id="R098">
+    <rect x="70" y="69.333333" width="8.75" height="11.555556"
+          fill="#9292DB" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R098</text>
+  </g>
+  <g class="patch recipe" id="R099">
+    <rect x="78.75" y="69.333333" width="8.75" height="11.555556"
+          fill="#926DFF" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R099</text>
+  </g>
+  <g class="patch recipe" id="R100">
+    <rect x="87.5" y="69.333333" width="8.75" height="11.555556"
+          fill="#6DFFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R100</text>
+  </g>
+  <g class="patch recipe" id="R101">
+    <rect x="96.25" y="69.333333" width="8.75" height="11.555556"
+          fill="#6DFFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R101</text>
+  </g>
+  <g class="patch recipe" id="R102">
+    <rect x="105" y="69.333333" width="8.75" height="11.555556"
+          fill="#6DFFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R102</text>
+  </g>
+  <g class="patch recipe" id="R103">
+    <rect x="113.75" y="69.333333" width="8.75" height="11.555556"
+          fill="#6DFF92" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R103</text>
+  </g>
+  <g class="patch recipe" id="R104">
+    <rect x="122.5" y="69.333333" width="8.75" height="11.555556"
+          fill="#6DDBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R104</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="69.333333" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="75.111111" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch recipe" id="R105">
+    <rect x="0" y="80.888889" width="8.75" height="11.555556"
+          fill="#6DDBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R105</text>
+  </g>
+  <g class="patch recipe" id="R106">
+    <rect x="8.75" y="80.888889" width="8.75" height="11.555556"
+          fill="#6DDBB6" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R106</text>
+  </g>
+  <g class="patch recipe" id="R107">
+    <rect x="17.5" y="80.888889" width="8.75" height="11.555556"
+          fill="#6DB6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R107</text>
+  </g>
+  <g class="patch recipe" id="R108">
+    <rect x="26.25" y="80.888889" width="8.75" height="11.555556"
+          fill="#6DB6DB" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R108</text>
+  </g>
+  <g class="patch recipe" id="R109">
+    <rect x="35" y="80.888889" width="8.75" height="11.555556"
+          fill="#6D92FF" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R109</text>
+  </g>
+  <g class="patch recipe" id="R110">
+    <rect x="43.75" y="80.888889" width="8.75" height="11.555556"
+          fill="#49FFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R110</text>
+  </g>
+  <g class="patch recipe" id="R111">
+    <rect x="52.5" y="80.888889" width="8.75" height="11.555556"
+          fill="#49FFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R111</text>
+  </g>
+  <g class="patch recipe" id="R112">
+    <rect x="61.25" y="80.888889" width="8.75" height="11.555556"
+          fill="#49FFB6" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R112</text>
+  </g>
+  <g class="patch recipe" id="R113">
+    <rect x="70" y="80.888889" width="8.75" height="11.555556"
+          fill="#49DBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R113</text>
+  </g>
+  <g class="patch recipe" id="R114">
+    <rect x="78.75" y="80.888889" width="8.75" height="11.555556"
+          fill="#49DBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R114</text>
+  </g>
+  <g class="patch recipe" id="R115">
+    <rect x="87.5" y="80.888889" width="8.75" height="11.555556"
+          fill="#49B6FF" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R115</text>
+  </g>
+  <g class="patch recipe" id="R116">
+    <rect x="96.25" y="80.888889" width="8.75" height="11.555556"
+          fill="#24FFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R116</text>
+  </g>
+  <g class="patch recipe" id="R117">
+    <rect x="105" y="80.888889" width="8.75" height="11.555556"
+          fill="#24FFDB" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R117</text>
+  </g>
+  <g class="patch recipe" id="R118">
+    <rect x="113.75" y="80.888889" width="8.75" height="11.555556"
+          fill="#24DBFF" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R118</text>
+  </g>
+  <g class="patch recipe" id="R119">
+    <rect x="122.5" y="80.888889" width="8.75" height="11.555556"
+          fill="#00FFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">R119</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="80.888889" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="86.666667" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch white_thickness" id="W00">
+    <rect x="0" y="92.444444" width="8.75" height="11.555556"
+          fill="#FFFFFF" stroke="#777" stroke-width="0.2"/>
+    <text x="4.375" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W00</text>
+  </g>
+  <g class="patch white_thickness" id="W01">
+    <rect x="8.75" y="92.444444" width="8.75" height="11.555556"
+          fill="#DBDBDB" stroke="#777" stroke-width="0.2"/>
+    <text x="13.125" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W01</text>
+  </g>
+  <g class="patch white_thickness" id="W02">
+    <rect x="17.5" y="92.444444" width="8.75" height="11.555556"
+          fill="#B6B6B6" stroke="#777" stroke-width="0.2"/>
+    <text x="21.875" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W02</text>
+  </g>
+  <g class="patch white_thickness" id="W03">
+    <rect x="26.25" y="92.444444" width="8.75" height="11.555556"
+          fill="#929292" stroke="#777" stroke-width="0.2"/>
+    <text x="30.625" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W03</text>
+  </g>
+  <g class="patch white_thickness" id="W04">
+    <rect x="35" y="92.444444" width="8.75" height="11.555556"
+          fill="#6D6D6D" stroke="#777" stroke-width="0.2"/>
+    <text x="39.375" y="98.222222" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W04</text>
+  </g>
+  <g class="patch white_thickness" id="W05">
+    <rect x="43.75" y="92.444444" width="8.75" height="11.555556"
+          fill="#494949" stroke="#777" stroke-width="0.2"/>
+    <text x="48.125" y="98.222222" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W05</text>
+  </g>
+  <g class="patch white_thickness" id="W06">
+    <rect x="52.5" y="92.444444" width="8.75" height="11.555556"
+          fill="#242424" stroke="#777" stroke-width="0.2"/>
+    <text x="56.875" y="98.222222" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W06</text>
+  </g>
+  <g class="patch white_thickness" id="W07">
+    <rect x="61.25" y="92.444444" width="8.75" height="11.555556"
+          fill="#000000" stroke="#777" stroke-width="0.2"/>
+    <text x="65.625" y="98.222222" fill="#fff"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle">W07</text>
+  </g>
+  <g class="patch orientation">
+    <rect x="70" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="74.375" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="78.75" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="83.125" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="87.5" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="91.875" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="96.25" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="100.625" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="105" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="109.375" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="113.75" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="118.125" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="122.5" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="126.875" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+  <g class="patch orientation">
+    <rect x="131.25" y="92.444444" width="8.75" height="11.555556"
+          fill="#fff" stroke="#777" stroke-width="0.2"/>
+    <text x="135.625" y="98.222222" fill="#111"
+          font-family="monospace" font-size="3" text-anchor="middle" dominant-baseline="middle"></text>
+  </g>
+
+</svg>

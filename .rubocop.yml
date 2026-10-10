@@ -1,5 +1,37 @@
 AllCops:
-  TargetRubyVersion: 3.2
+  TargetRubyVersion: 4.0
+  NewCops: enable
+  SuggestExtensions: false
+
+Style/Documentation:
+  Enabled: true
+
+Metrics/AbcSize:
+  Max: 40
+
+Metrics/CyclomaticComplexity:
+  Max: 12
+
+Metrics/MethodLength:
+  Max: 35
+
+Metrics/BlockLength:
+  Max: 35
+  Exclude:
+    - "spec/**/*"
+
+Metrics/ParameterLists:
+  Max: 6
+
+Metrics/PerceivedComplexity:
+  Max: 12
+
+Naming/MethodParameterName:
+  MinNameLength: 1
+
+Naming/PredicateMethod:
+  AllowedMethods:
+    - validate!
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
