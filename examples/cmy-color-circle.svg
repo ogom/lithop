@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CMY material display-colour chart. The circles remain editable vectors. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104" role="img" aria-labelledby="title desc">
+  <title id="title">CMY material colour combinations</title>
+  <desc id="desc">Overlapping Cyan, Magenta, and Yellow circles with their subtractive RGB blends.</desc>
+  <defs>
+    <clipPath id="cyan-clip"><circle cx="70" cy="38" r="31"/></clipPath>
+    <clipPath id="magenta-clip"><circle cx="91" cy="66" r="31"/></clipPath>
+  </defs>
+  <style>
+  </style>
+
+  <rect width="140" height="104" fill="#FFFFFF"/>
+  <circle cx="70" cy="38" r="31" fill="#0086D6"/>
+  <circle cx="49" cy="66" r="31" fill="#FCE300"/>
+  <circle cx="91" cy="66" r="31" fill="#EC008C"/>
+
+  <!-- Pairwise intersections use multiplicative RGB blends of the display colours. -->
+  <g clip-path="url(#cyan-clip)"><circle cx="49" cy="66" r="31" fill="#007700"/></g>
+  <g clip-path="url(#cyan-clip)"><circle cx="91" cy="66" r="31" fill="#000075"/></g>
+  <g clip-path="url(#magenta-clip)"><circle cx="49" cy="66" r="31" fill="#E90000"/></g>
+  <g clip-path="url(#cyan-clip)">
+    <g clip-path="url(#magenta-clip)"><circle cx="49" cy="66" r="31" fill="#000000"/></g>
+  </g>
+</svg>

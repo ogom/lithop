@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-check:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ["4.0"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      - run: brew install vips
+      - run: bundle exec ruby -rvips -e 'Vips::Operation.new("svgload_buffer")'
+      - run: bundle exec rake release:check
