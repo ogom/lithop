@@ -32,7 +32,7 @@ RSpec.describe Lithop::ReferenceThreeMF do
       )
       expect(assembly.slice(:type, :components)).to eq(type: "model", components: 1)
       expect(report.fetch(:parts)).to eq([{ id: "3", name: "PLA Basic White", extruder: 4 }])
-      expect(report.fetch(:plates)).to eq([{ id: 1, name: "lithophane" }])
+      expect(report.fetch(:plates)).to eq([{ id: 1, name: "lithophane", object_ids: ["4"] }])
     end
   end
 end

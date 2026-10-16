@@ -34,4 +34,36 @@ RSpec.describe Lithop::JobDirectory do
       expect(File.read(sentinel)).to eq("keep")
     end
   end
+
+  it "recovers an owned temporary directory whose process ended" do
+    Dir.mktmpdir do |project_dir|
+      temporary = File.join(project_dir, "build", ".tmp-stale-job")
+      FileUtils.mkdir_p(temporary)
+      File.write(
+        File.join(temporary, described_class::OWNER_FILE),
+        JSON.generate(job_id: "stale-job", pid: 999_999_999, created_at: Time.now.utc.iso8601)
+      )
+
+      recovered = described_class.recover(project_dir:)
+
+      expect(recovered.map(&:job_id)).to eq(["stale-job"])
+      expect(Dir).not_to exist(temporary)
+    end
+  end
+
+  it "preserves unknown and live temporary directories during recovery" do
+    Dir.mktmpdir do |project_dir|
+      unknown = File.join(project_dir, "build", ".tmp-unknown")
+      live = File.join(project_dir, "build", ".tmp-live-job")
+      FileUtils.mkdir_p([unknown, live])
+      File.write(
+        File.join(live, described_class::OWNER_FILE),
+        JSON.generate(job_id: "live-job", pid: Process.pid, created_at: Time.now.utc.iso8601)
+      )
+
+      expect(described_class.recover(project_dir:)).to be_empty
+      expect(Dir).to exist(unknown)
+      expect(Dir).to exist(live)
+    end
+  end
 end

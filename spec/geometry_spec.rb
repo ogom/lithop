@@ -54,4 +54,29 @@ RSpec.describe Lithop::Geometry do
     report = Lithop::MeshValidator.report!(geometry.each_triangle)
     expect(report.volume).to be_within(1e-9).of(1.5)
   end
+
+  it "closes a height-field slab above a nonzero base" do
+    geometry = described_class.new(
+      heights: [1.0, 1.1, 1.2, 1.3],
+      columns: 1,
+      rows: 1,
+      x_boundaries: [0.0, 1.0],
+      y_boundaries: [0.0, 1.0],
+      optimize_bottom: true,
+      base_height: 0.9
+    )
+
+    report = Lithop::MeshValidator.report!(geometry.each_triangle)
+
+    expect(report.volume).to be_within(1e-9).of(0.25)
+  end
+
+  it "rejects a height field below its requested base" do
+    expect do
+      described_class.new(
+        heights: [0.8, 1.0, 1.0, 1.0], columns: 1, rows: 1,
+        x_boundaries: [0.0, 1.0], y_boundaries: [0.0, 1.0], base_height: 0.9
+      )
+    end.to raise_error(Lithop::InputError, /below the base/)
+  end
 end

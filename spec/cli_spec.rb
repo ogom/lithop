@@ -68,9 +68,17 @@ RSpec.describe Lithop::CLI do
     expect { described_class.run(["--help"], out:, err: StringIO.new, cwd: Dir.pwd) }
       .to raise_error(SystemExit) { |error| expect(error.status).to eq(0) }
     expect(out.string).to include("default: cmy")
+    expect(out.string).to include("Model width (default: 140.0)")
+    expect(out.string).to include("Model height (default: 104.0)")
     expect(out.string).to include("0.2/0.4 (default: 0.2)")
     expect(out.string).to include("Layer height after first layer (default: 0.1)")
     expect(out.string).to include("CMY/W color layers: 4/5/7 (default: 7)")
+    expect(out.string).to include("--tile-count COUNT")
+    expect(out.string).to include("--separate-z-parts")
+    expect(out.string).to include("--color-region-parts COUNT")
+    expect(out.string).to include("--brightness PERCENT")
+    expect(out.string).to include("--contrast PERCENT")
+    expect(out.string).to include("--saturation PERCENT")
     expect(out.string).not_to include("--resolution")
     expect(out.string).not_to include("--nozzle MM")
     expect(out.string).not_to include("--first-layer MM")
@@ -88,7 +96,10 @@ RSpec.describe Lithop::CLI do
           height: 2.0,
           pixel_size: 1.0,
           nozzle_diameter: 0.4,
-          margin_left: 1.0
+          margin_left: 1.0,
+          brightness: -10.0,
+          contrast: 15.0,
+          saturation: -20.0
         )
       )
       input = File.join(directory, "input.png")
@@ -98,7 +109,9 @@ RSpec.describe Lithop::CLI do
         [
           input, "--nozzle-diameter", "0.2", "--margin-right", "1",
           "--image-fit", "contain", "--crop-position-x", "0.25", "--crop-position-y", "0.75",
-          "--crop-scale", "0.8", "--color-pixel-size", "1.5"
+          "--crop-scale", "0.8", "--color-pixel-size", "1.5",
+          "--brightness", "20", "--contrast", "25", "--saturation", "30",
+          "--separate-z-parts", "--color-region-parts", "2"
         ],
         cwd: directory
       )
@@ -119,7 +132,10 @@ RSpec.describe Lithop::CLI do
       expect(settings.fetch("crop_position_y")).to eq(0.75)
       expect(settings.fetch("crop_scale")).to eq(0.8)
       expect(settings.fetch("color_pixel_size")).to eq(1.5)
+      expect(settings.values_at("brightness", "contrast", "saturation")).to eq([20.0, 25.0, 30.0])
       expect(settings.fetch("effective_color_pixel_size")).to eq(1.5)
+      expect(settings.fetch("separate_z_parts")).to be(true)
+      expect(settings.fetch("color_region_parts")).to eq(2)
       expect(settings.fetch("input_settings_path")).to eq(File.join(directory, "config", "settings.json"))
     end
   end

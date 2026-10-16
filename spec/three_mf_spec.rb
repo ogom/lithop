@@ -70,6 +70,15 @@ RSpec.describe Lithop::ThreeMF do
       .to raise_error(Lithop::InputError, /unknown material/)
   end
 
+  it "rejects a non-finite plate Z offset" do
+    parts = [
+      described_class::Part.new(material: :white, triangles: geometry.each_triangle, build_z_offset: Float::INFINITY)
+    ]
+
+    expect { described_class.write("unused.3mf", parts:) }
+      .to raise_error(Lithop::InputError, /build_z_offset must be a finite number/)
+  end
+
   it "rejects a triangle enumerable that cannot be replayed for writing" do
     triangles = Object.new
     source = geometry
@@ -107,6 +116,28 @@ RSpec.describe Lithop::ThreeMF do
         expect(settings).to include("PLA Basic White")
         expect(settings).to include('<metadata key="extruder" value="4"/>')
         expect(settings).not_to include('<metadata key="extruder" value="1"/>')
+      end
+    end
+  end
+
+  it "allows named Z-region parts to share one material and extruder" do
+    parts = ["Base White", "Top White"].map do |name|
+      described_class::Part.new(material: :white, triangles: geometry.each_triangle, name:, region: "white")
+    end
+
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "white-regions.3mf")
+      result = described_class.write(path, parts:)
+
+      expect(result.material_count).to eq(1)
+      expect(result.object_count).to eq(2)
+      expect(result.triangle_counts_by_material).to eq(white: 24)
+      Zip::File.open(path) do |archive|
+        model = archive.read("3D/3dmodel.model")
+        metadata = archive.read("Metadata/model_settings.config")
+        expect(model).to include('name="Base White"', 'name="Top White"', 'lithop:region="white"')
+        expect(metadata).to include('value="Base White"', 'value="Top White"')
+        expect(metadata.scan('<metadata key="extruder" value="4"/>').length).to eq(2)
       end
     end
   end

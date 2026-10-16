@@ -30,15 +30,15 @@ Before printing, inspect every layer and confirm the Cyan, Magenta, Yellow, and 
 
 ## Install
 
-To install the 0.1.0 release from RubyGems, install libvips and the matching Lithop version:
+To install the 0.2.0 release from RubyGems, install libvips and the matching Lithop version:
 
 ```sh
 brew install vips
-gem install lithop -v 0.1.0
+gem install lithop -v 0.2.0
 lithop --version
 ```
 
-The version command must print `0.1.0`.
+The version command must print `0.2.0`.
 
 To work from a source checkout instead:
 
@@ -68,6 +68,12 @@ bundle exec lithop path/to/image.jpeg
 ```
 
 It writes `lithop.3mf` with a single `lithophane` plate and White/Cyan/Magenta/Yellow extruders. Its layer preview and physical print still require manual verification.
+
+Use `--brightness`, `--contrast`, and `--saturation` with percentages from `-100` to `100` to adjust the shared sRGB input before White thickness and CMYW recipes are sampled. The resolved values are recorded in each job's `settings.json`.
+
+Use `--tile-count N` with `--tile-layout auto`, `columns`, `rows`, or `grid` to emit exactly N local-origin 3MF tiles. Tiled jobs include assembled offsets and bounds in `manifest.json` plus a physical-size `tile-layout.svg` placement guide.
+
+Add `--separate-z-parts` to place three closed CMYW color-region bands and Top White on four Bambu Studio plates inside every generated 3MF. Each color-region plate includes its own Base White carrier, and every plate is translated to start at Z=0 for independent printing; `manifest.json` retains the original assembly order and Z bounds.
 
 The command reports estimated and final triangle counts and creates a new `build/<job_id>/` directory. Completed jobs are never overwritten. Inspect `preview.png`, `transmission.png`, `thickness.png`, and the four material masks, then import `lithop.3mf` into Bambu Studio as a model. The 3MF contains geometry, fixed extruder numbers, and layer-height metadata. It does not select a printer, physical build plate, AMS slot, or complete slicing preset.
 

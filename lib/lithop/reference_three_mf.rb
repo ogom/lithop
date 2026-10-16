@@ -7,6 +7,7 @@ require "zip"
 
 module Lithop
   # Streams structural measurements from an existing 3MF without retaining its meshes.
+  # rubocop:disable-next Metrics/ClassLength
   class ReferenceThreeMF
     def initialize(path)
       @path = File.expand_path(path)
@@ -63,6 +64,7 @@ module Lithop
     def start_object(event)
       {
         id: event[1]["id"], type: event[1]["type"], vertices: 0, triangles: 0, components: 0,
+        component_refs: [],
         minimum: [nil, nil, nil], maximum: [nil, nil, nil]
       }
     end
@@ -80,6 +82,10 @@ module Lithop
         current[:triangles] += 1
       when "component"
         current[:components] += 1
+        current[:component_refs] << {
+          object_id: event[1]["objectid"],
+          transform: transform_values(event[1]["transform"])
+        }
       end
     end
 
@@ -105,7 +111,11 @@ module Lithop
 
       document.get_elements("config/plate").map do |plate|
         metadata = plate.get_elements("metadata").to_h { |entry| [entry.attributes["key"], entry.attributes["value"]] }
-        { id: integer_or_nil(metadata["plater_id"]), name: metadata["plater_name"] }
+        object_ids = plate.get_elements("model_instance").filter_map do |instance|
+          entry = instance.get_elements("metadata").find { |item| item.attributes["key"] == "object_id" }
+          entry && entry.attributes["value"]
+        end
+        { id: integer_or_nil(metadata["plater_id"]), name: metadata["plater_name"], object_ids: }
       end
     end
 
@@ -115,5 +125,11 @@ module Lithop
     end
 
     def integer_or_nil(value) = value && Integer(value)
+
+    def transform_values(value)
+      return unless value
+
+      value.split.map { |number| Float(number) }
+    end
   end
 end

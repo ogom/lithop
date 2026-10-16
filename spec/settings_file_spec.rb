@@ -8,14 +8,18 @@ RSpec.describe Lithop::SettingsFile do
       path = File.join(directory, "settings.json")
       File.write(
         path,
-        JSON.generate(pixel_size: 0.5, color_model: "CMY", margin_left: 2.0, image_fit: "CONTAIN")
+        JSON.generate(
+          pixel_size: 0.5, color_model: "CMY", margin_left: 2.0,
+          image_fit: "CONTAIN", tile_layout: "COLUMNS", tile_count: 2
+        )
       )
 
       result = described_class.load(path, required: true)
 
       expect(result.path).to eq(path)
       expect(result.values).to eq(
-        pixel_size: 0.5, color_model: "cmy", margin_left: 2.0, image_fit: "contain"
+        pixel_size: 0.5, color_model: "cmy", margin_left: 2.0,
+        image_fit: "contain", tile_layout: "columns", tile_count: 2
       )
     end
   end

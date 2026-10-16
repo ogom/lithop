@@ -30,12 +30,21 @@
   "crop_position_x": 0.5,
   "crop_position_y": 0.5,
   "crop_scale": 1.0,
+  "brightness": 0.0,
+  "contrast": 0.0,
+  "saturation": 0.0,
   "minimum_thickness": 1.0,
   "maximum_thickness": 2.14689422,
   "pixel_size": 0.5,
   "color_pixel_size": null,
   "grid_columns": null,
   "grid_rows": null,
+  "tile_count": 1,
+  "tile_layout": "auto",
+  "tile_rows": null,
+  "tile_columns": null,
+  "separate_z_parts": false,
+  "color_region_parts": 3,
   "first_layer_height": 0.1,
   "layer_height": 0.1,
   "base_white_layers": 2,
@@ -84,12 +93,21 @@ lithop image.png --config presets/fine.json
 | `crop_position_x` | `--crop-position-x FRACTION` | `0.5` | 左`0`から右`1`までの横位置 |
 | `crop_position_y` | `--crop-position-y FRACTION` | `0.5` | 上`0`から下`1`までの縦位置 |
 | `crop_scale` | `--crop-scale FRACTION` | `1.0` | 切り出し矩形または収容画像の倍率 |
+| `brightness` | `--brightness PERCENT` | `0.0` | sRGB明るさ補正。`-100`〜`100` |
+| `contrast` | `--contrast PERCENT` | `0.0` | sRGBコントラスト補正。`-100`〜`100` |
+| `saturation` | `--saturation PERCENT` | `0.0` | sRGB彩度補正。`-100`〜`100` |
 | `minimum_thickness` | `--min-thickness MM` | `1.0` | 要求最小厚さmm |
 | `maximum_thickness` | `--max-thickness MM` | `2.14689422` | 要求最大厚さmm |
 | `pixel_size` | `--pixel-size MM` | `0.22` | XYセル寸法mm |
 | `color_pixel_size` | `--color-pixel-size MM` | `null` | `pixel_size`以上のCMYW色セル寸法。`null`は同じ寸法 |
-| `grid_columns` | なし | `591` | fit格子の列数。寸法または`pixel_size`指定時は未指定扱い |
-| `grid_rows` | なし | `455` | fit格子の行数。寸法または`pixel_size`指定時は未指定扱い |
+| `grid_columns` | なし | `637` | fit格子の列数。寸法または`pixel_size`指定時は未指定扱い |
+| `grid_rows` | なし | `473` | fit格子の行数。寸法または`pixel_size`指定時は未指定扱い |
+| `tile_count` | `--tile-count COUNT` | `1` | 出力する3MFタイルの総数 |
+| `tile_layout` | `--tile-layout MODE` | `auto` | `auto`、`columns`、`rows`、`grid` |
+| `tile_rows` | `--tile-rows COUNT` | `null` | `grid`配置の行数 |
+| `tile_columns` | `--tile-columns COUNT` | `null` | `grid`配置の列数 |
+| `separate_z_parts` | `--separate-z-parts` | `false` | 下地White、CMYW色領域、上部WhiteをZ方向の別プレートにする |
+| `color_region_parts` | `--color-region-parts COUNT` | `3` | Z分離時のCMYW色領域の分割数 |
 | `first_layer_height` | `--first-layer-height MM` | `0.1` | 下地Whiteの層高mm |
 | `layer_height` | `--layer-height MM` | `0.1` | CMYW色領域の積層ピッチmm |
 | `base_white_layers` | なし | `2` | 色領域より下のWhite層数 |
@@ -123,7 +141,11 @@ SVGでは、通常の厚さ格子と`color_pixel_size`を指定した色格子�
 
 `image_fit=cover`は出力領域を満たして余分を切り出し、`contain`は画像全体を収めて残りをWhiteにします。`crop_position_x`と`crop_position_y`は、`cover`では切り出す位置、`contain`では画像を置く位置です。`crop_scale`を`1`より小さくすると、`cover`では拡大して狭い範囲を切り出し、`contain`では画像を縮小してWhite領域を増やします。
 
+`brightness`、`contrast`、`saturation`はJPEG、PNG、SVGをsRGBへ正規化した後、格子へサンプリングする前にこの順で適用します。単位は百分率で、`0`は無補正です。明るさはRGB値へ加算し、コントラストは50%グレーを中心に、彩度はRec.601輝度を中心に調整します。`-100`はそれぞれ黒方向、コントラストなし、無彩色となり、`100`は既定量の2倍です。範囲外の値はクリップされます。同じ補正済み画像をWhite厚さとCMYW色選択で共有します。
+
 `color_pixel_size`を指定すると、White厚さは`pixel_size`の格子で保ったまま、各色セル内の厚さセルが同じCMYWレシピを使います。色セルはモデル原点から独立して区切り、端には部分セルを残します。未指定時は従来どおり厚さと色が同じ格子です。
+
+タイル配置の選択、座標、Z分割のプレート構成、併用時の成果物は[3MFタイル分割とZ分割](tiling.md)を参照してください。
 
 標準では`null`を推奨します。140 × 104 mmの細線評価では、0.4 mm以上の色セルは色境界の段差と3MF三角形数を増やし、処理時間を短縮しませんでした。細線を含まない入力で個別にプレビューとBambu Studioのレイヤー表示を確認できる場合だけ、より大きい値を使用してください。
 
@@ -149,9 +171,14 @@ lithop images/page.png --project-dir output/book
 - 幅、高さ、厚さ、XYセル寸法、レイヤー高さが正の有限値ではない
 - `layout_profile`が`standard`ではない
 - `grid_columns`と`grid_rows`が同時に指定されていない、または正の整数ではない
+- `tile_count`が1以上の整数ではない、配置名が不明、`grid`の行数 × 列数が総数と一致しない
+- 行数または列数がXYセル数を超え、幅または高さが0セルになるタイルがある
+- `separate_z_parts`が真偽値ではない、または`color_region_parts`が1〜`color_layer_count`の整数ではない
+- Z分離時に上部Whiteの最小厚さが0になる
 - `color_pixel_size`が`null`でも`pixel_size`以上の正の有限値でもない
 - `image_fit`が`cover`または`contain`ではない
 - クロップ位置が0〜1の範囲外、または`crop_scale`が0より大きく1以下ではない
+- 明るさ、コントラスト、彩度が`-100`〜`100`の有限値ではない
 - 要求最小厚さが要求最大厚さを超える
 - ノズル径が0.2または0.4ではない
 - 色モデルが`cmy`ではない
@@ -180,7 +207,7 @@ effective: 1.0–2.14689422 mm
 
 ## 校正片に使う設定
 
-`lithop calibrate`は、厚さ、ノズル、レイヤー高さ、色モデル、色領域の層数、顔料順、三角形数上限を設定から読みます。固定レイアウトのため、`width`、`height`、`margin_*`、画像配置、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。
+`lithop calibrate`は、厚さ、ノズル、レイヤー高さ、色モデル、色領域の層数、顔料順、三角形数上限を設定から読みます。固定レイアウトで入力画像を使わないため、`width`、`height`、`margin_*`、画像配置、明るさ・コントラスト・彩度、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。
 
 現在の校正片は7層・`cyan,magenta,yellow`順と、White厚みを8段階取れる範囲を要求します。通常生成で使う`--calibration-profile`は入力設定キーではなくCLIオプションです。詳しくは[色校正](calibration.md)を参照してください。
 

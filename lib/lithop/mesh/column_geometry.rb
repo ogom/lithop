@@ -7,8 +7,8 @@ module Lithop
     include Enumerable
 
     def initialize(model:, material:)
-      unless Palette::PIGMENTS.include?(material)
-        raise InputError, "column geometry requires a CMY pigment: #{material.inspect}"
+      unless Palette::MATERIALS.include?(material)
+        raise InputError, "column geometry requires a CMYW material: #{material.inspect}"
       end
 
       @model = model

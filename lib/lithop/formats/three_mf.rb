@@ -19,7 +19,11 @@ module Lithop
     MODEL_CONTENT_TYPE = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
     ZIP_MUTEX = Mutex.new
     # Triangles are indexed and then serialized, so their enumerable must be replayable.
-    Part = Data.define(:material, :triangles)
+    Part = Data.define(:material, :triangles, :name, :region, :build_z_offset) do
+      def initialize(material:, triangles:, name: nil, region: nil, build_z_offset: 0.0)
+        super
+      end
+    end
     Result = Data.define(:vertex_count, :triangle_count, :material_count, :object_count,
                          :triangle_counts_by_material)
 
@@ -66,13 +70,13 @@ module Lithop
         unless valid_materials.include?(part.material)
           raise InputError, "3MF part uses an unknown material: #{part.material.inspect}"
         end
+        unless part.build_z_offset.is_a?(Numeric) && part.build_z_offset.finite?
+          raise InputError, "3MF part build_z_offset must be a finite number"
+        end
 
         part
       end
       raise InputError, "3MF requires at least one material part" if validated.empty?
-      if validated.map(&:material).uniq.length != validated.length
-        raise InputError, "3MF material parts must have unique materials"
-      end
 
       validated.freeze
     end
@@ -87,7 +91,6 @@ module Lithop
             @instrumentation.measure(:three_mf_xml_zip) do
               write_entry(archive, "[Content_Types].xml", content_types_xml)
               write_entry(archive, "_rels/.rels", relationships_xml)
-              archive.put_next_entry("3D/3dmodel.model")
             end
             package = ThreeMFModelWriter.new(
               archive, @parts, @profile, instrumentation: @instrumentation, settings: @settings
