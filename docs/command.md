@@ -19,8 +19,14 @@ Usage: lithop IMAGE [options]
 | オプション | 型 | 既定値 | 説明 |
 | --- | --- | ---: | --- |
 | `--layout-profile NAME` | String | `standard` | 標準構造を選ぶ。現在は`standard`のみ |
-| `--width MM` | Float | `130` | 完成幅をmm単位で指定する |
-| `--height MM` | Float | `100` | 完成高さをmm単位で指定する |
+| `--width MM` | Float | `140.0` | 完成幅をmm単位で指定する |
+| `--height MM` | Float | `104.0` | 完成高さをmm単位で指定する |
+| `--tile-count COUNT` | Integer | `1` | 出力する3MFタイルの総数を指定する |
+| `--tile-layout MODE` | String | `auto` | `auto`、`columns`、`rows`、`grid`から配置を選ぶ |
+| `--tile-rows COUNT` | Integer | なし | `grid`配置の行数を指定する |
+| `--tile-columns COUNT` | Integer | なし | `grid`配置の列数を指定する |
+| `--separate-z-parts` | — | 無効 | 下地White、CMYW色領域、上部Whiteを別プレートにする |
+| `--color-region-parts COUNT` | Integer | `3` | CMYW色領域のZ方向の分割数を指定する |
 | `--margin-top MM` | Float | `0` | 上側のWhite余白をmm単位で指定する |
 | `--margin-right MM` | Float | `0` | 右側のWhite余白をmm単位で指定する |
 | `--margin-bottom MM` | Float | `0` | 下側のWhite余白をmm単位で指定する |
@@ -29,6 +35,9 @@ Usage: lithop IMAGE [options]
 | `--crop-position-x FRACTION` | Float | `0.5` | 横方向の配置を左`0`から右`1`で指定する |
 | `--crop-position-y FRACTION` | Float | `0.5` | 縦方向の配置を上`0`から下`1`で指定する |
 | `--crop-scale FRACTION` | Float | `1.0` | `0`より大きく`1`以下の切り出し倍率を指定する |
+| `--brightness PERCENT` | Float | `0` | sRGB明るさを`-100`〜`100`で補正する |
+| `--contrast PERCENT` | Float | `0` | sRGBコントラストを`-100`〜`100`で補正する |
+| `--saturation PERCENT` | Float | `0` | sRGB彩度を`-100`〜`100`で補正する |
 | `--min-thickness MM` | Float | `1.0` | 要求最小厚さをmm単位で指定する |
 | `--max-thickness MM` | Float | `2.14689422` | 要求最大厚さをmm単位で指定する |
 | `--pixel-size MM` | Float | `0.22` | XYセル寸法をmm単位で指定する |
@@ -67,6 +76,8 @@ SVGをPNGへ書き出さずに生成します。
 lithop image.svg --width 20 --height 15 --pixel-size 0.5
 ```
 
+タイル分割とZ分割のコマンド例、配置、成果物は[3MFタイル分割とZ分割](tiling.md)を参照してください。
+
 完成寸法を変えず、上下1 mm、左右2 mmのWhite余白を設けます。
 
 ```sh
@@ -85,6 +96,12 @@ lithop image.png --crop-position-x 1 --crop-scale 0.8 --pixel-size 0.25 --color-
 lithop image.png --image-fit contain
 ```
 
+明るさを10%上げ、コントラストを15%、彩度を20%強めます。指定値は出力の`settings.json`へ保存され、同じCLIまたは入力設定JSONで再現できます。
+
+```sh
+lithop image.png --brightness 10 --contrast 15 --saturation 20
+```
+
 別のプロジェクトと入力設定を使います。
 
 ```sh
@@ -99,17 +116,18 @@ lithop image.png --calibration-profile build/<calibration-job-id>/calibration-pr
 
 ### 出力
 
-書き出し前にWhite参照STL、CMYW 3MF、材料別3MFの三角形数を表示します。成功時は確定した三角形数、ジョブディレクトリの絶対パス、ファイル一覧を表示します。
+画像処理、White高さ、材料モデル、メッシュ計画、3MF、プレビュー、メタデータの進捗を百分率で表示します。書き出し前にWhite参照STL、CMYW 3MF、材料別3MFの三角形数を表示し、成功時は確定した三角形数、ジョブディレクトリの絶対パス、ファイル一覧を表示します。
 
 ```text
 Estimated ... STL and ... CMYW 3MF triangles before writing
   CMYW by material: cyan=..., magenta=..., yellow=..., white=...
+Progress ...%: ...
 Generated ... STL and ... CMYW 3MF triangles
 in /absolute/path/to/build/<job_id>
   ...
 ```
 
-一時出力、完了済みジョブ、各ファイルは[生成物と記録](artifacts.md)を参照してください。
+通常生成と校正生成を合わせて、同じプロジェクトで同時に実行できる変換は1件です。`Ctrl-C`で中止したジョブは`cancelled`になり、一時出力を回収して成果物ディレクトリを公開しません。状態、一時出力、完了済みジョブ、各ファイルは[生成物と記録](artifacts.md)を参照してください。
 
 ## 校正片を生成する
 
@@ -138,7 +156,7 @@ Usage: lithop calibrate [options]
 lithop calibrate
 ```
 
-固定レイアウトのため、画像用の`width`、`height`、`margin_*`、画像配置、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。生成物は[校正ジョブのファイル](artifacts.md#校正ジョブのファイル)、測定方法は[色校正](calibration.md)を参照してください。
+固定レイアウトで入力画像を使わないため、画像用の`width`、`height`、`margin_*`、画像配置、明るさ・コントラスト・彩度、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。生成物は[校正ジョブのファイル](artifacts.md#校正ジョブのファイル)、測定方法は[色校正](calibration.md)を参照してください。
 
 ## 生成物を削除する
 

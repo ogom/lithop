@@ -23,6 +23,7 @@ Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトフ�
 ## 仕様を調べる
 
 - [生成物と記録](artifacts.md) — ジョブ、全成果物、プレビュー、`settings.json`、`manifest.json`
+- [3MFタイル分割とZ分割](tiling.md) — 指定枚数のXY分割、組み立て座標、4プレートのZ分割
 - [生成オプションと設定ファイル](config.md) — 設定の優先順位、入力JSON、既定値、検証規則
 - [コマンドリファレンス](command.md) — 構文、全オプション、終了ステータス
 - [CMYWの色モデルと積層構造](color-model.md) — 材料、減法混色、White厚み、3MF構造

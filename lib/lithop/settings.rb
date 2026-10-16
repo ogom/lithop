@@ -13,10 +13,13 @@ module Lithop
       validate_color_model!
       validate_layout_profile!
       validate_grid!
+      validate_tiles!
       validate_layer_structure!
+      validate_z_parts!
       validate_advanced_layer_structure!
       validate_margins!
       validate_image_placement!
+      validate_image_adjustments!
       validate_nozzle_diameter!
       validate_mesh_limit!
     end
@@ -71,6 +74,55 @@ module Lithop
                 grid_rows.is_a?(Integer) && grid_rows.positive?
 
       raise ConfigurationError, "grid_columns and grid_rows must be positive integers or null"
+    end
+
+    def validate_tiles!
+      validate_tile_count!
+      validate_tile_layout!
+      validate_tile_grid!
+
+      if tile_count > columns * rows
+        raise ConfigurationError, "tile layout must leave at least one XY cell in every tile"
+      end
+
+      return if resolved_tile_columns <= columns && resolved_tile_rows <= rows
+
+      raise ConfigurationError, "tile layout must leave at least one XY cell in every tile"
+    end
+
+    def validate_tile_count!
+      return if tile_count.is_a?(Integer) && tile_count.positive?
+
+      raise ConfigurationError, "tile_count must be a positive integer"
+    end
+
+    def validate_tile_layout!
+      return if Settings::TILE_LAYOUTS.include?(tile_layout)
+
+      raise ConfigurationError, "tile_layout must be one of: #{Settings::TILE_LAYOUTS.join(", ")}"
+    end
+
+    def validate_tile_grid!
+      unless tile_layout == "grid"
+        return if tile_rows.nil? && tile_columns.nil?
+
+        raise ConfigurationError, "tile_rows and tile_columns may only be set for grid layout"
+      end
+      unless tile_rows.is_a?(Integer) && tile_rows.positive? &&
+             tile_columns.is_a?(Integer) && tile_columns.positive?
+        raise ConfigurationError, "tile_rows and tile_columns must be positive integers for grid layout"
+      end
+      return if tile_rows * tile_columns == tile_count
+
+      raise ConfigurationError, "tile_rows times tile_columns must equal tile_count"
+    end
+
+    def validate_z_parts!
+      raise ConfigurationError, "separate_z_parts must be a boolean" unless [true, false].include?(separate_z_parts)
+      unless color_region_parts.is_a?(Integer) && color_region_parts.positive? &&
+             color_region_parts <= color_layer_count
+        raise ConfigurationError, "color_region_parts must be an integer from 1 to color_layer_count"
+      end
     end
 
     def validate_layer_structure!
@@ -128,6 +180,15 @@ module Lithop
       raise ConfigurationError, "crop_scale must be a finite number greater than 0 and at most 1"
     end
 
+    def validate_image_adjustments!
+      %i[brightness contrast saturation].each do |key|
+        value = public_send(key)
+        next if value.is_a?(Numeric) && value.finite? && value.between?(-100.0, 100.0)
+
+        raise ConfigurationError, "#{key} must be a finite percentage from -100 to 100"
+      end
+    end
+
     def validate_nozzle_diameter!
       return if Settings::NOZZLE_DIAMETERS.include?(nozzle_diameter)
 
@@ -174,6 +235,7 @@ module Lithop
     COLOR_LAYER_COUNTS = [4, 5, 7].freeze
     LAYOUT_PROFILES = ["standard"].freeze
     IMAGE_FITS = %w[cover contain].freeze
+    TILE_LAYOUTS = %w[auto columns rows grid].freeze
     PIGMENTS = %i[cyan magenta yellow].freeze
     MINIMUM_TOP_WHITE_LAYERS = LayerStructure::MINIMUM_TOP_WHITE_LAYERS
     DEFAULTS = {
@@ -188,12 +250,21 @@ module Lithop
       crop_position_x: 0.5,
       crop_position_y: 0.5,
       crop_scale: 1.0,
+      brightness: 0.0,
+      contrast: 0.0,
+      saturation: 0.0,
       minimum_thickness: 1.0,
       maximum_thickness: 2.14689422,
       pixel_size: 0.22,
       color_pixel_size: nil,
       grid_columns: 637,
       grid_rows: 473,
+      tile_count: 1,
+      tile_layout: "auto",
+      tile_rows: nil,
+      tile_columns: nil,
+      separate_z_parts: false,
+      color_region_parts: 3,
       first_layer_height: 0.1,
       layer_height: 0.1,
       base_white_layers: 2,
@@ -232,6 +303,7 @@ module Lithop
       end
 
       validate_physical_minimum!
+      validate_separated_top_white!
     end
 
     def without_default_grid(values)
@@ -249,6 +321,18 @@ module Lithop
     def fitted_grid? = !grid_columns.nil?
     def pixel_size_x = width.fdiv(columns)
     def pixel_size_y = height.fdiv(rows)
+
+    def resolved_tile_shape
+      case tile_layout
+      when "columns" then [1, tile_count]
+      when "rows" then [tile_count, 1]
+      when "grid" then [tile_rows, tile_columns]
+      else automatic_tile_shape
+      end
+    end
+
+    def resolved_tile_rows = resolved_tile_shape.fetch(0)
+    def resolved_tile_columns = resolved_tile_shape.fetch(1)
 
     def estimated_triangles
       (4 * columns * rows) + (4 * (columns + rows))
@@ -288,8 +372,39 @@ module Lithop
         effective_color_pixel_size: effective_color_pixel_size,
         effective_minimum_thickness: effective_minimum_thickness,
         effective_maximum_thickness: effective_maximum_thickness,
-        columns: columns, rows: rows, pixel_size_x: pixel_size_x, pixel_size_y: pixel_size_y
+        columns: columns, rows: rows, pixel_size_x: pixel_size_x, pixel_size_y: pixel_size_y,
+        resolved_tile_rows: resolved_tile_rows, resolved_tile_columns: resolved_tile_columns
       )
+    end
+
+    private
+
+    def automatic_tile_shape
+      factors = factor_shapes.map do |row_count, column_count|
+        tile_width = width.fdiv(column_count)
+        tile_height = height.fdiv(row_count)
+        [[Math.log(tile_width.fdiv(tile_height)).abs, -column_count], [row_count, column_count]]
+      end
+      feasible = factors.select do |_score, (row_count, column_count)|
+        row_count <= rows && column_count <= columns
+      end
+      (feasible.empty? ? factors : feasible).min_by(&:first).last
+    end
+
+    def factor_shapes
+      (1..Math.sqrt(tile_count).floor).flat_map do |row_count|
+        next [] unless (tile_count % row_count).zero?
+
+        column_count = tile_count / row_count
+        row_count == column_count ? [[row_count, column_count]] : [[row_count, column_count], [column_count, row_count]]
+      end
+    end
+
+    def validate_separated_top_white!
+      return unless separate_z_parts
+      return if effective_minimum_thickness > layer_structure.color_region_end
+
+      raise ConfigurationError, "separate_z_parts requires a positive top White thickness"
     end
   end
 end

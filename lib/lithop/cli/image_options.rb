@@ -7,8 +7,10 @@ module Lithop
 
     def add(parser, options)
       add_dimensions(parser, options)
+      add_tiles(parser, options)
       add_margins(parser, options)
       add_placement(parser, options)
+      add_adjustments(parser, options)
       add_thickness(parser, options)
       add_sampling(parser, options)
     end
@@ -17,10 +19,34 @@ module Lithop
       parser.on("--layout-profile NAME", "Layout profile: standard") do |value|
         options[:layout_profile] = value
       end
-      parser.on("--width MM", Float, "Model width (default: 130)") { |value| options[:width] = value }
-      parser.on("--height MM", Float, "Model height (default: 100)") { |value| options[:height] = value }
+      parser.on("--width MM", Float, "Model width (default: #{Settings::DEFAULTS.fetch(:width)})") do |value|
+        options[:width] = value
+      end
+      parser.on("--height MM", Float, "Model height (default: #{Settings::DEFAULTS.fetch(:height)})") do |value|
+        options[:height] = value
+      end
     end
     private_class_method :add_dimensions
+
+    def add_tiles(parser, options)
+      parser.on("--tile-count COUNT", Integer, "Number of 3MF tiles (default: 1)") do |value|
+        options[:tile_count] = value
+      end
+      parser.on("--tile-layout MODE", "Tile layout: auto/columns/rows/grid (default: auto)") do |value|
+        options[:tile_layout] = value.downcase
+      end
+      parser.on("--tile-rows COUNT", Integer, "Tile rows for grid layout") { |value| options[:tile_rows] = value }
+      parser.on("--tile-columns COUNT", Integer, "Tile columns for grid layout") do |value|
+        options[:tile_columns] = value
+      end
+      parser.on("--separate-z-parts", "Put base White, color regions, and top White on separate plates") do
+        options[:separate_z_parts] = true
+      end
+      parser.on("--color-region-parts COUNT", Integer, "Number of CMYW color-region Z parts (default: 3)") do |value|
+        options[:color_region_parts] = value
+      end
+    end
+    private_class_method :add_tiles
 
     def add_margins(parser, options)
       parser.on("--margin-top MM", Float, "Top margin (default: 0)") { |value| options[:margin_top] = value }
@@ -45,6 +71,19 @@ module Lithop
       end
     end
     private_class_method :add_placement
+
+    def add_adjustments(parser, options)
+      parser.on("--brightness PERCENT", Float, "Brightness: -100..100 (default: 0)") do |value|
+        options[:brightness] = value
+      end
+      parser.on("--contrast PERCENT", Float, "Contrast: -100..100 (default: 0)") do |value|
+        options[:contrast] = value
+      end
+      parser.on("--saturation PERCENT", Float, "Saturation: -100..100 (default: 0)") do |value|
+        options[:saturation] = value
+      end
+    end
+    private_class_method :add_adjustments
 
     def add_thickness(parser, options)
       parser.on("--min-thickness MM", Float, "Requested minimum model thickness (default: 1.0)") do |value|

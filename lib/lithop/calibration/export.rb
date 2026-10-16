@@ -10,34 +10,47 @@ module Lithop
     class Export
       Result = Data.define(:job_id, :path, :files, :triangle_count, :patch_count)
 
-      def initialize(settings:, project_dir:, clock: Time, random: SecureRandom)
+      def initialize(
+        settings:, project_dir:, job_progress: nil, clock: Time, random: SecureRandom, job_id: nil
+      )
         @settings = settings
         @project_dir = File.expand_path(project_dir)
         @clock = clock
         @random = random
+        @job_progress = job_progress
+        @job_id = job_id
       end
 
       def call
-        job_id = "#{@clock.now.utc.strftime("%Y%m%dT%H%M%SZ")}-#{@random.hex(4)}-calibration"
-        destination, generated = JobDirectory.new(project_dir: @project_dir, job_id:).call do |directory|
-          generate(directory, job_id)
+        job_id = @job_id || "#{@clock.now.utc.strftime("%Y%m%dT%H%M%SZ")}-#{@random.hex(4)}-calibration"
+        execution = JobExecution.new(
+          project_dir: @project_dir, job_id:, progress: @job_progress, clock: @clock
+        )
+        execution.call do |job|
+          destination, generated = JobDirectory.new(project_dir: @project_dir, job_id:).call do |directory|
+            generate(directory, job_id, job)
+          end
+          job.progress(phase: :publishing, percent: 99, message: "Calibration artifacts published")
+          Result.new(job_id:, path: destination, files: generated.fetch(:files),
+                     triangle_count: generated.fetch(:triangle_count), patch_count: generated.fetch(:patch_count))
         end
-        Result.new(job_id:, path: destination, files: generated.fetch(:files),
-                   triangle_count: generated.fetch(:triangle_count), patch_count: generated.fetch(:patch_count))
       end
 
       private
 
-      def generate(directory, job_id)
+      def generate(directory, job_id, job)
+        job.progress(phase: :calibration_planning, percent: 10, message: "Planning calibration target")
         target = Target.new(settings: @settings)
+        job.progress(phase: :three_mf_write, percent: 35, message: "Writing calibration 3MF")
         result = write_three_mf(File.join(directory, "calibration.3mf"), target)
+        job.progress(phase: :supporting_files, percent: 80, message: "Writing calibration files")
         TargetSVG.write(File.join(directory, "calibration.svg"), target)
         profile = Profile.template(profile_id: job_id, settings: @settings, target:)
         profile.write(File.join(directory, "calibration-profile.json"))
         write_manifest(directory, job_id, target, result)
         write_readme(directory, target)
         {
-          files: Dir.children(directory).sort,
+          files: Dir.children(directory).reject { |name| name == JobDirectory::OWNER_FILE }.sort,
           triangle_count: result.triangle_count,
           patch_count: target.patches.length
         }

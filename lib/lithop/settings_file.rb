@@ -26,16 +26,22 @@ module Lithop
 
       validate_keys!(data, expanded)
       validate_schema!(data, expanded)
-      values = data.except("schema_version").transform_keys(&:to_sym)
-      values[:color_model] = values[:color_model].downcase if values[:color_model].is_a?(String)
-      values[:image_fit] = values[:image_fit].downcase if values[:image_fit].is_a?(String)
-      values[:layout_profile] = values[:layout_profile].downcase if values[:layout_profile].is_a?(String)
+      values = normalize_values(data.except("schema_version").transform_keys(&:to_sym))
       Result.new(path: expanded, values:)
     rescue JSON::ParserError => e
       raise ConfigurationError, "settings file is not valid JSON: #{expanded}: #{e.message}"
     rescue SystemCallError => e
       raise ConfigurationError, "could not read settings file: #{expanded}: #{e.message}"
     end
+
+    def normalize_values(values)
+      values[:color_model] = values[:color_model].downcase if values[:color_model].is_a?(String)
+      values[:image_fit] = values[:image_fit].downcase if values[:image_fit].is_a?(String)
+      values[:layout_profile] = values[:layout_profile].downcase if values[:layout_profile].is_a?(String)
+      values[:tile_layout] = values[:tile_layout].downcase if values[:tile_layout].is_a?(String)
+      values
+    end
+    private_class_method :normalize_values
 
     def validate_keys!(data, path)
       unknown = data.keys - ALLOWED_KEYS

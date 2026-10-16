@@ -24,6 +24,8 @@ bundle exec lithop examples/cmy-fine-line.svg --width 20 --height 15 --pixel-siz
 
 表示された`build/<job_id>/`で、`preview.png`、`PRINT_README.md`、`settings.json`、`manifest.json`を確認してから`lithop.3mf`を開きます。自分のジョブIDと印刷条件は`manifest.json`に記録されています。
 
+タイルまたはZ分割ジョブを開く場合は、[3MFタイル分割とZ分割](tiling.md)に従い、対象3MF、組み立て座標、4プレート、材料割り当てを確認します。
+
 ## 3MFを読み込む
 
 1. `cmyk_white.stl`ではなく`lithop.3mf`をモデルとして読み込む。

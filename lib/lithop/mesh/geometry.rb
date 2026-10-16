@@ -2,16 +2,23 @@
 
 module Lithop
   # Generates the closed triangle mesh for a monochrome height field.
+  # rubocop:disable-next Metrics/ClassLength
   class Geometry
-    def initialize(heights:, columns:, rows:, x_boundaries:, y_boundaries:, optimize_bottom: false)
+    # rubocop:disable-next Metrics/ParameterLists
+    def initialize(
+      heights:, columns:, rows:, x_boundaries:, y_boundaries:, optimize_bottom: false, base_height: 0.0
+    )
       @heights = heights
       @columns = columns
       @rows = rows
       @x = x_boundaries
       @y = y_boundaries
       @optimize_bottom = optimize_bottom
+      @base_height = base_height
       expected = (columns + 1) * (rows + 1)
       raise InputError, "expected #{expected} vertex heights, got #{heights.length}" unless heights.length == expected
+      raise InputError, "base height must be finite" unless base_height.is_a?(Numeric) && base_height.finite?
+      raise InputError, "vertex heights must not be below the base" if heights.any? { |height| height < base_height }
     end
 
     def each_triangle(&block)
@@ -40,7 +47,8 @@ module Lithop
       yield [top_left, bottom_right, top_right]
       return if @optimize_bottom
 
-      quad([x0, y1, 0.0], [x1, y1, 0.0], [x1, y0, 0.0], [x0, y0, 0.0], &)
+      quad([x0, y1, @base_height], [x1, y1, @base_height],
+           [x1, y0, @base_height], [x0, y0, @base_height], &)
     end
 
     def emit_perimeter(&)
@@ -58,8 +66,8 @@ module Lithop
       y0 = @y.last - @y.fetch(row + 1)
       y1 = @y.last - @y.fetch(row)
       quad(
-        [0.0, y0, 0.0], [0.0, y0, height(row + 1, 0)],
-        [0.0, y1, height(row, 0)], [0.0, y1, 0.0], &
+        [0.0, y0, @base_height], [0.0, y0, height(row + 1, 0)],
+        [0.0, y1, height(row, 0)], [0.0, y1, @base_height], &
       )
     end
 
@@ -68,7 +76,7 @@ module Lithop
       y0 = @y.last - @y.fetch(row + 1)
       y1 = @y.last - @y.fetch(row)
       quad(
-        [x, y0, 0.0], [x, y1, 0.0],
+        [x, y0, @base_height], [x, y1, @base_height],
         [x, y1, height(row, @columns)], [x, y0, height(row + 1, @columns)], &
       )
     end
@@ -77,7 +85,7 @@ module Lithop
       x0 = @x.fetch(column)
       x1 = @x.fetch(column + 1)
       quad(
-        [x0, 0.0, 0.0], [x1, 0.0, 0.0],
+        [x0, 0.0, @base_height], [x1, 0.0, @base_height],
         [x1, 0.0, height(@rows, column + 1)], [x0, 0.0, height(@rows, column)], &
       )
     end
@@ -87,18 +95,18 @@ module Lithop
       x1 = @x.fetch(column + 1)
       y = @y.last
       quad(
-        [x0, y, 0.0], [x0, y, height(0, column)],
-        [x1, y, height(0, column + 1)], [x1, y, 0.0], &
+        [x0, y, @base_height], [x0, y, height(0, column)],
+        [x1, y, height(0, column + 1)], [x1, y, @base_height], &
       )
     end
 
     def emit_bottom_fan
-      center = [@x.last.fdiv(2), @y.last.fdiv(2), 0.0]
+      center = [@x.last.fdiv(2), @y.last.fdiv(2), @base_height]
       rendered_y = @y.reverse.map { |y| @y.last - y }
-      perimeter = rendered_y.map { |y| [0.0, y, 0.0] }
-      @x.drop(1).each { |x| perimeter << [x, @y.last, 0.0] }
-      rendered_y.reverse.drop(1).each { |y| perimeter << [@x.last, y, 0.0] }
-      @x.reverse.drop(1).first(@x.length - 2).each { |x| perimeter << [x, 0.0, 0.0] }
+      perimeter = rendered_y.map { |y| [0.0, y, @base_height] }
+      @x.drop(1).each { |x| perimeter << [x, @y.last, @base_height] }
+      rendered_y.reverse.drop(1).each { |y| perimeter << [@x.last, y, @base_height] }
+      @x.reverse.drop(1).first(@x.length - 2).each { |x| perimeter << [x, 0.0, @base_height] }
       perimeter.each_with_index do |from, index|
         yield [center, from, perimeter.fetch((index + 1) % perimeter.length)]
       end

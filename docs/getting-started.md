@@ -13,15 +13,15 @@ Lithopは、画像からカラーLithophane（リトファン）の3MFとWhite�
 
 ## インストール
 
-公開版0.1.0を使う場合は、libvipsとバージョンを指定したLithopをインストールします。
+公開版0.2.0を使う場合は、libvipsとバージョンを指定したLithopをインストールします。
 
 ```sh
 brew install vips
-gem install lithop -v 0.1.0
+gem install lithop -v 0.2.0
 lithop --version
 ```
 
-`lithop --version`が`0.1.0`を表示することを確認します。
+`lithop --version`が`0.2.0`を表示することを確認します。
 
 ソースチェックアウトから実行する場合は、代わりに次を実行します。
 
@@ -86,6 +86,8 @@ SVGは正の`width`・`height`（単位なし、`px`、`mm`、`in`）または`v
 各画像の1画素は3MFの1セルで、左上がモデルの`+Y`側です。入力画像と向き、色、明暗、材料層数を比較してください。全ファイルとJSONの説明は[生成物と記録](artifacts.md)にあります。
 
 確認後、`lithop.3mf`をBambu Studioへモデルとして読み込みます。材料部品を個別に移動、整列、拡大縮小、結合しないでください。
+
+タイル分割またはZ分割を使う場合は、[3MFタイル分割とZ分割](tiling.md)に従って各3MF、組み立て位置、Bambu Studioのプレートを確認してください。
 
 ## 生成物を削除する
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 - 2026-10-16
+
+- Adds exact-count CMYW 3MF tiling, plus optional four-plate output for three Base White-backed CMYW color regions and Top White.
+- Aligns the CLI help and source-checkout settings with the 140 × 104 mm standard profile.
+- Adds reproducible sRGB brightness, contrast, and saturation adjustments to JSON settings and the CLI.
+- Records conversion progress and final status, supports cancellation and stale temporary-data recovery, and limits each project to one active conversion.
+
 ## 0.1.0 - 2026-10-12
 
 - Converts JPEG, PNG, and validated self-contained SVG files up to 15 MB into a White reference STL and a single-plate multipart CMYW 3MF.

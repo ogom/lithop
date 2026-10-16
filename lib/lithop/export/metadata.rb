@@ -5,6 +5,7 @@ require "json"
 
 module Lithop
   # Builds and writes the resolved settings and export manifest.
+  # rubocop:disable-next Metrics/ClassLength
   class ExportMetadata
     def initialize(settings:, input_settings_path:, calibration:)
       @settings = settings
@@ -29,8 +30,8 @@ module Lithop
 
     private
 
+    # rubocop:disable-next Metrics/MethodLength
     def manifest_for(source, job_id, artifacts)
-      materials = material_names(used_materials(artifacts))
       {
         schema_version: 1,
         job_id:,
@@ -49,9 +50,21 @@ module Lithop
         },
         input_sha256: Digest::SHA256.file(source).hexdigest,
         filament_profile: FilamentProfile.default.to_h,
+        tile_layout: tile_layout_metadata(artifacts),
+        tiles: tile_metadata(artifacts),
         parts: [
           { file: artifacts.stl_name, material: "White", role: "monochrome_reference" },
-          { file: artifacts.three_mf_name, materials:, role: "cmyw_lithophane" }
+          *artifacts.tile_artifacts.map do |artifact|
+            tile_materials = Palette::MATERIALS.select do |material|
+              artifact.material_model.materials.include?(material)
+            end
+            {
+              file: artifact.name,
+              tile_id: artifact.tile.id,
+              materials: material_names(tile_materials),
+              role: artifacts.tile_artifacts.one? ? "cmyw_lithophane" : "cmyw_lithophane_tile"
+            }
+          end
         ],
         color_model: @color_metadata.call(artifacts),
         files: artifact_files(artifacts),
@@ -62,12 +75,44 @@ module Lithop
 
     def artifact_files(artifacts)
       files = [
-        artifacts.stl_name, artifacts.three_mf_name, "settings.json", "manifest.json",
+        artifacts.stl_name, *artifacts.three_mf_names, "settings.json", "manifest.json",
         "preview.png", "transmission.png", "thickness.png",
         *Palette::MATERIALS.map { |material| "#{material}-mask.png" }, "PRINT_README.md"
       ]
+      files << "tile-layout.svg" if artifacts.tile_artifacts.length > 1
       files << "calibration-profile.json" if @calibration.profile
       files
+    end
+
+    def tile_layout_metadata(artifacts)
+      {
+        requested: @settings.tile_layout,
+        tile_count: @settings.tile_count,
+        rows: artifacts.tile_layout.rows,
+        columns: artifacts.tile_layout.columns,
+        order: "left_to_right_then_top_to_bottom",
+        local_origin: "xy_min",
+        assembled_image_top: "+Y"
+      }
+    end
+
+    def tile_metadata(artifacts)
+      artifacts.tile_artifacts.map do |artifact|
+        tile = artifact.tile
+        used = Palette::MATERIALS.select { |material| artifact.material_model.materials.include?(material) }
+        {
+          id: tile.id,
+          file: artifact.name,
+          row: tile.row,
+          column: tile.column,
+          offset_mm: tile.offset,
+          bounds_mm: tile.bounds,
+          dimensions_mm: { width: tile.width, height: tile.height, depth: @settings.effective_maximum_thickness },
+          materials: material_names(used),
+          unused_materials: material_names(Palette::MATERIALS - used),
+          triangle_count: artifact.three_mf.triangle_count
+        }
+      end
     end
 
     def used_materials(artifacts)

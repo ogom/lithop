@@ -61,6 +61,17 @@ module Lithop
     def color_region_thickness = (color_layer_count * layer_height).round(9)
     def base_white_thickness = (base_white_layers * first_layer_height).round(9)
     def minimum_top_white_thickness = (minimum_physical_thickness - color_end).round(9)
+    def color_region_start = base_white_thickness
+    def color_region_end = color_end
+
+    def color_region_layer_ranges(part_count)
+      size, remainder = color_layer_count.divmod(part_count)
+      start = base_white_layers
+      Array.new(part_count) do |index|
+        finish = start + size + (index < remainder ? 1 : 0)
+        (start...finish).tap { start = finish }
+      end
+    end
 
     def materials_for(recipe_layers, height)
       top_white_layers = top_white_layer_count(height, pigment_layers: recipe_layers.length)

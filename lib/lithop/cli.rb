@@ -44,7 +44,8 @@ module Lithop
         project_dir:,
         input_settings_path: settings_path,
         calibration:,
-        progress: method(:report_estimate)
+        progress: method(:report_estimate),
+        job_progress: method(:report_job_progress)
       ).call(input)
       @out.puts "Generated #{result.triangle_count} STL and #{result.three_mf_triangle_count} CMYW 3MF triangles"
       @out.puts "in #{result.path}"
@@ -64,6 +65,12 @@ module Lithop
       )
       counts = estimate.triangle_counts_by_material.map { |material, count| "#{material}=#{count}" }.join(", ")
       @out.puts "  CMYW by material: #{counts}"
+    end
+
+    def report_job_progress(progress)
+      return unless progress.state == "running" && progress.percent.positive?
+
+      @out.puts "Progress #{progress.percent.round}%: #{progress.message}"
     end
 
     def load_settings(options, keys: nil)

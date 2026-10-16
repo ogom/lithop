@@ -45,6 +45,63 @@ RSpec.describe Lithop::Settings do
     end
   end
 
+  describe "tile layout" do
+    it "defaults to one tile and resolves explicit row, column, and grid layouts" do
+      expect(described_class.new.resolved_tile_shape).to eq([1, 1])
+      expect(described_class.new(tile_count: 3, tile_layout: "columns").resolved_tile_shape).to eq([1, 3])
+      expect(described_class.new(tile_count: 3, tile_layout: "rows").resolved_tile_shape).to eq([3, 1])
+      grid = described_class.new(tile_count: 6, tile_layout: "grid", tile_rows: 2, tile_columns: 3)
+      expect(grid.resolved_tile_shape).to eq([2, 3])
+    end
+
+    it "rejects invalid counts, layouts, grids, and zero-cell tiles" do
+      expect { described_class.new(tile_count: 0) }
+        .to raise_error(Lithop::ConfigurationError, /tile_count must be a positive integer/)
+      expect { described_class.new(tile_layout: "diagonal") }
+        .to raise_error(Lithop::ConfigurationError, /tile_layout must be one of/)
+      expect { described_class.new(tile_count: 6, tile_layout: "grid", tile_rows: 2, tile_columns: 2) }
+        .to raise_error(Lithop::ConfigurationError, /must equal tile_count/)
+      expect { described_class.new(tile_count: 2, tile_rows: 1) }
+        .to raise_error(Lithop::ConfigurationError, /only be set for grid layout/)
+      expect do
+        described_class.new(
+          width: 2.0, height: 2.0, grid_columns: 2, grid_rows: 2,
+          tile_count: 3, tile_layout: "columns"
+        )
+      end.to raise_error(Lithop::ConfigurationError, /at least one XY cell/)
+    end
+  end
+
+  describe "Z-part separation" do
+    it "keeps compatibility mode by default and accepts three color-region parts" do
+      settings = described_class.new(separate_z_parts: true, color_region_parts: 3)
+
+      expect(settings.separate_z_parts).to be(true)
+      expect(settings.color_region_parts).to eq(3)
+      expect(settings.layer_structure.color_region_layer_ranges(3)).to eq([2...5, 5...7, 7...9])
+    end
+
+    it "rejects invalid separation values" do
+      expect { described_class.new(separate_z_parts: "yes") }
+        .to raise_error(Lithop::ConfigurationError, /separate_z_parts must be a boolean/)
+      expect { described_class.new(color_region_parts: 0) }
+        .to raise_error(Lithop::ConfigurationError, /color_region_parts must be an integer/)
+      expect { described_class.new(color_region_parts: 8) }
+        .to raise_error(Lithop::ConfigurationError, /color_region_parts must be an integer/)
+    end
+
+    it "requires a positive top White region when separation is enabled" do
+      expect do
+        described_class.new(
+          separate_z_parts: true,
+          minimum_thickness: 0.9,
+          maximum_thickness: 0.9,
+          top_white_start: 0.9
+        )
+      end.to raise_error(Lithop::ConfigurationError, /positive top White thickness/)
+    end
+  end
+
   describe "color model" do
     it "uses CMY by default" do
       expect(described_class.new.color_model).to eq("cmy")
@@ -165,6 +222,24 @@ RSpec.describe Lithop::Settings do
         .to raise_error(Lithop::ConfigurationError, /crop_position_y must be a finite number from 0 to 1/)
       expect { described_class.new(crop_scale: 0.0) }
         .to raise_error(Lithop::ConfigurationError, /crop_scale must be a finite number greater than 0/)
+    end
+  end
+
+  describe "image adjustments" do
+    it "uses neutral percentages by default and accepts the full adjustment range" do
+      expect(described_class.new.to_h.values_at(:brightness, :contrast, :saturation)).to eq([0.0, 0.0, 0.0])
+
+      settings = described_class.new(brightness: -100.0, contrast: 25.0, saturation: 100.0)
+      expect(settings.to_h.values_at(:brightness, :contrast, :saturation)).to eq([-100.0, 25.0, 100.0])
+    end
+
+    it "rejects non-finite and out-of-range adjustment percentages" do
+      expect { described_class.new(brightness: -100.1) }
+        .to raise_error(Lithop::ConfigurationError, /brightness must be a finite percentage from -100 to 100/)
+      expect { described_class.new(contrast: Float::INFINITY) }
+        .to raise_error(Lithop::ConfigurationError, /contrast must be a finite percentage from -100 to 100/)
+      expect { described_class.new(saturation: 100.1) }
+        .to raise_error(Lithop::ConfigurationError, /saturation must be a finite percentage from -100 to 100/)
     end
   end
 

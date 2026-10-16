@@ -22,12 +22,21 @@ module Lithop
     attr_reader crop_position_x: Numeric
     attr_reader crop_position_y: Numeric
     attr_reader crop_scale: Numeric
+    attr_reader brightness: Numeric
+    attr_reader contrast: Numeric
+    attr_reader saturation: Numeric
     attr_reader minimum_thickness: Numeric
     attr_reader maximum_thickness: Numeric
     attr_reader pixel_size: Numeric
     attr_reader color_pixel_size: Numeric?
     attr_reader grid_columns: Integer?
     attr_reader grid_rows: Integer?
+    attr_reader tile_count: Integer
+    attr_reader tile_layout: String
+    attr_reader tile_rows: Integer?
+    attr_reader tile_columns: Integer?
+    attr_reader separate_z_parts: bool
+    attr_reader color_region_parts: Integer
     attr_reader first_layer_height: Numeric
     attr_reader layer_height: Numeric
     attr_reader base_white_layers: Integer
@@ -52,6 +61,9 @@ module Lithop
     def fitted_grid?: () -> bool
     def pixel_size_x: () -> Float
     def pixel_size_y: () -> Float
+    def resolved_tile_shape: () -> [Integer, Integer]
+    def resolved_tile_rows: () -> Integer
+    def resolved_tile_columns: () -> Integer
     def estimated_triangles: () -> Integer
     def triangle_limit_message: (String label, Integer triangle_count) -> String
     def x_boundaries: () -> Array[Numeric]
@@ -59,6 +71,33 @@ module Lithop
     def quantize_thickness: (Numeric value) -> Float
     def margin_samples: () -> Hash[Symbol, Integer]
     def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class TileLayout
+    class Tile < Data
+      attr_reader id: String
+      attr_reader row: Integer
+      attr_reader column: Integer
+      attr_reader row_start: Integer
+      attr_reader row_end: Integer
+      attr_reader column_start: Integer
+      attr_reader column_end: Integer
+      attr_reader x_min: Numeric
+      attr_reader x_max: Numeric
+      attr_reader y_min: Numeric
+      attr_reader y_max: Numeric
+
+      def width: () -> Numeric
+      def height: () -> Numeric
+      def offset: () -> Hash[Symbol, Numeric]
+      def bounds: () -> Hash[Symbol, Numeric]
+    end
+
+    attr_reader rows: Integer
+    attr_reader columns: Integer
+    attr_reader tiles: Array[Tile]
+
+    def initialize: (Settings settings) -> void
   end
 
   class Palette
@@ -186,7 +225,14 @@ module Lithop
         attr_reader patch_count: Integer
       end
 
-      def initialize: (settings: Settings, project_dir: String, ?clock: untyped, ?random: untyped) -> void
+      def initialize: (
+        settings: Settings,
+        project_dir: String,
+        ?job_progress: untyped,
+        ?clock: untyped,
+        ?random: untyped,
+        ?job_id: String?
+      ) -> void
       def call: () -> Result
     end
   end
@@ -243,6 +289,11 @@ module Lithop
     class Part < Data
       attr_reader material: Symbol
       attr_reader triangles: Enumerable[untyped]
+      attr_reader name: String?
+      attr_reader region: String?
+      attr_reader build_z_offset: Numeric
+
+      def initialize: (material: Symbol, triangles: Enumerable[untyped], ?name: String?, ?region: String?, ?build_z_offset: Numeric) -> void
     end
 
     class Result < Data
@@ -266,6 +317,28 @@ module Lithop
     attr_reader object_count: Integer
   end
 
+  class JobCancelled < Error
+  end
+
+  class JobExecution
+    class Progress < Data
+      attr_reader job_id: String
+      attr_reader state: String
+      attr_reader phase: String
+      attr_reader percent: Float
+      attr_reader message: String
+      attr_reader updated_at: String
+    end
+
+    attr_reader job_id: String
+    attr_reader status_path: String
+
+    def initialize: (project_dir: String, job_id: String, ?progress: untyped, ?clock: untyped) -> void
+    def call: [A] () { (JobExecution) -> A } -> A
+    def progress: (phase: String | Symbol, percent: Numeric, message: String) -> void
+    def self.request_cancel: (project_dir: String, job_id: String, ?clock: untyped) -> String
+  end
+
   class Export
     class CalibrationInput < Data
       attr_reader profile: Calibration::Profile
@@ -278,9 +351,11 @@ module Lithop
       ?input_settings_path: String?,
       ?calibration: CalibrationInput?,
       ?progress: untyped,
+      ?job_progress: untyped,
       ?instrumentation: untyped,
       ?clock: untyped,
-      ?random: untyped
+      ?random: untyped,
+      ?job_id: String?
     ) -> void
     def call: (String input_path) -> ExportResult
   end

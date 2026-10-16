@@ -112,6 +112,175 @@ RSpec.describe Lithop::Export do
     end
   end
 
+  it "writes the requested number of local-origin 3MF tiles and their assembled coordinates" do
+    Dir.mktmpdir do |directory|
+      input = File.join(directory, "input.png")
+      pixels = ([64, 96, 128] * 24).pack("C*")
+      Vips::Image.new_from_memory(pixels, 6, 4, 3, :uchar).pngsave(input)
+      settings = Lithop::Settings.new(
+        width: 6.0, height: 4.0, grid_columns: 6, grid_rows: 4,
+        tile_count: 6, tile_layout: "grid", tile_rows: 2, tile_columns: 3,
+        separate_z_parts: true, color_region_parts: 3
+      )
+
+      result = described_class.new(settings:, project_dir: directory, clock:, random:).call(input)
+      tile_files = result.files.grep(%r{\Atiles/.+\.3mf\z})
+      manifest = JSON.parse(File.read(File.join(result.path, "manifest.json")))
+
+      expect(tile_files).to eq(%w[
+                                 tiles/tile_r01_c01.3mf tiles/tile_r01_c02.3mf tiles/tile_r01_c03.3mf
+                                 tiles/tile_r02_c01.3mf tiles/tile_r02_c02.3mf tiles/tile_r02_c03.3mf
+                               ])
+      expect(result.files).to include("tile-layout.svg")
+      expect(result.files).not_to include("lithop.3mf")
+      expect(File.read(File.join(result.path, "tile-layout.svg"))).to include("2.0 × 2.0 mm")
+      expect(manifest.fetch("files")).to match_array(result.files)
+      expect(manifest.fetch("tile_layout")).to include(
+        "requested" => "grid", "tile_count" => 6, "rows" => 2, "columns" => 3
+      )
+      expect(manifest.fetch("tiles").first).to include(
+        "id" => "tile_r01_c01",
+        "offset_mm" => { "x" => 0.0, "y" => 2.0 },
+        "bounds_mm" => { "x_min" => 0.0, "x_max" => 2.0, "y_min" => 2.0, "y_max" => 4.0 }
+      )
+      expect(manifest.fetch("tiles").last).to include(
+        "id" => "tile_r02_c03",
+        "offset_mm" => { "x" => 4.0, "y" => 0.0 },
+        "bounds_mm" => { "x_min" => 4.0, "x_max" => 6.0, "y_min" => 0.0, "y_max" => 2.0 }
+      )
+      tile_files.each do |name|
+        report = Lithop::ReferenceThreeMF.new(File.join(result.path, name)).call
+        part_names = report.fetch(:parts).map { |part| part.fetch(:name) }
+        expect(part_names).to include("Top White")
+        expect(part_names.grep(/ Base White\z/).length).to eq(3)
+        expect(part_names.grep(/\AColor region [123] /).map { |part_name| part_name.split.fetch(2) }.uniq)
+          .to eq(%w[1 2 3])
+        mesh_objects = report.fetch(:models).flat_map { |model| model.fetch(:objects) }
+                             .select { |object| object.fetch(:triangles).positive? }
+        mesh_objects.each do |object|
+          expect(object.fetch(:minimum).first(2)).to eq([-1.0, -1.0])
+          expect(object.fetch(:maximum).first(2)).to eq([1.0, 1.0])
+        end
+      end
+    end
+  end
+
+  it "adds Base White to each CMYW Z region and writes four Bambu Studio plates" do
+    Dir.mktmpdir do |directory|
+      input = File.join(directory, "cyan.svg")
+      File.write(
+        input,
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">' \
+        '<rect width="1" height="1" fill="#0086D6"/></svg>'
+      )
+      settings = Lithop::Settings.new(
+        width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1,
+        separate_z_parts: true, color_region_parts: 3
+      )
+
+      result = described_class.new(settings:, project_dir: directory, clock:, random:).call(input)
+      report = Lithop::ReferenceThreeMF.new(File.join(result.path, "lithop.3mf")).call
+      manifest = JSON.parse(File.read(File.join(result.path, "manifest.json")))
+      parts = report.fetch(:parts)
+      objects = report.fetch(:models).flat_map { |model| model.fetch(:objects) }.to_h do |object|
+        [object.fetch(:id), object]
+      end
+
+      expect(parts.map { |part| part.fetch(:name) }).to eq(
+        [
+          "Color region 1 Base White", "Color region 1 White", "Color region 1 Cyan",
+          "Color region 2 Base White", "Color region 2 White", "Color region 2 Cyan",
+          "Color region 3 Base White", "Color region 3 White", "Color region 3 Cyan",
+          "Top White"
+        ]
+      )
+      expect(parts.map { |part| part.fetch(:extruder) }).to eq([4, 4, 1, 4, 4, 1, 4, 4, 1, 4])
+      expect(result.object_count).to eq(10)
+      expect(report.fetch(:plates)).to eq(
+        [
+          { id: 1, name: "Color region 1", object_ids: ["4"] },
+          { id: 2, name: "Color region 2", object_ids: ["8"] },
+          { id: 3, name: "Color region 3", object_ids: ["12"] },
+          { id: 4, name: "Top White", object_ids: ["14"] }
+        ]
+      )
+      assemblies = objects.values.select { |object| object.fetch(:components).positive? }
+      expect(assemblies.map { |object| object.fetch(:component_refs).first.fetch(:transform)&.last })
+        .to eq([0.1, 0.1, 0.1, 0.05])
+      expect(objects.fetch(parts.fetch(0).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
+      expect(objects.fetch(parts.fetch(1).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.15, 0.15])
+      expect(objects.fetch(parts.fetch(4).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
+      expect(objects.fetch(parts.fetch(7).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
+      expect(objects.fetch(parts.fetch(9).fetch(:id)).fetch(:minimum).last).to eq(-0.05)
+      expect(manifest.dig("color_model", "z_part_separation", "enabled")).to be(true)
+      expect(manifest.dig("color_model", "z_part_separation", "color_regions")).to eq(
+        [
+          { "id" => "color_region_1", "layer_start" => 1, "layer_end" => 3, "z_min" => 0.2, "z_max" => 0.5 },
+          { "id" => "color_region_2", "layer_start" => 4, "layer_end" => 5, "z_min" => 0.5, "z_max" => 0.7 },
+          { "id" => "color_region_3", "layer_start" => 6, "layer_end" => 7, "z_min" => 0.7, "z_max" => 0.9 }
+        ]
+      )
+      expect(manifest.dig("color_model", "z_part_separation", "plates")).to eq(
+        [
+          {
+            "plate_id" => 1, "name" => "Color region 1",
+            "source_z_min" => 0.0, "source_z_max" => 0.5,
+            "build_z_min" => 0.0, "build_z_max" => 0.5
+          },
+          {
+            "plate_id" => 2, "name" => "Color region 2",
+            "source_z_min" => 0.0, "source_z_max" => 0.7,
+            "build_z_min" => 0.0, "build_z_max" => 0.7
+          },
+          {
+            "plate_id" => 3, "name" => "Color region 3",
+            "source_z_min" => 0.0, "source_z_max" => 0.9,
+            "build_z_min" => 0.0, "build_z_max" => 0.9
+          },
+          {
+            "plate_id" => 4, "name" => "Top White",
+            "source_z_min" => 0.9, "source_z_max" => 2.14689422,
+            "build_z_min" => 0.0, "build_z_max" => 1.24689422
+          }
+        ]
+      )
+      Zip::File.open(File.join(result.path, "lithop.3mf")) do |archive|
+        model = archive.read("3D/3dmodel.model")
+        expect(model).to include(
+          'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"',
+          'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06"',
+          'requiredextensions="p"',
+          '<metadata name="Application">BambuStudio-02.08.03.66</metadata>',
+          '<metadata name="BambuStudio:3mfVersion">1</metadata>',
+          "<metadata name=\"lithop:Application\" preserve=\"1\">Lithop #{Lithop::VERSION}</metadata>"
+        )
+        expect(model.scan(%r{p:path="/3D/Objects/object_\d+\.model"}).length).to eq(10)
+        expect(model.scan('printable="1"').length).to eq(4)
+        expect(archive.map(&:name)).to include(
+          "3D/_rels/3dmodel.model.rels",
+          *Array.new(4) { |index| "3D/Objects/object_#{index + 1}.model" }
+        )
+        relationships = archive.read("3D/_rels/3dmodel.model.rels")
+        expect(relationships.scan(%r{Target="/3D/Objects/object_\d+\.model"}).length).to eq(4)
+        submodel = archive.read("3D/Objects/object_2.model")
+        expect(submodel).to include(
+          'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06"',
+          'requiredextensions="m p"'
+        )
+        expect(submodel.scan("p:UUID=")).not_to be_empty
+        model_settings = archive.read("Metadata/model_settings.config")
+        expect(model_settings.scan(%r{<metadata key="identify_id" value="(\d+)"/>}).flatten)
+          .to eq(%w[218 253 276 287])
+        expect(model_settings.scan(/subtype="normal_part" uuid="[^"]+"/).length).to eq(10)
+        expect(model_settings.scan(/<assemble_item object_id="(\d+)" instance_id="0"/).flatten)
+          .to eq(%w[4 8 12 14])
+        expect(model_settings.scan(/<assemble_item object_id="\d+" volume_id="\d+"/).length).to eq(10)
+        ranges = archive.read("Metadata/layer_config_ranges.xml")
+        expect(ranges).to include('<object id="4">', 'min_z="0.1" max_z="1.24689422"')
+      end
+    end
+  end
+
   it "recreates the same geometry and recipes independently of job identity" do
     Dir.mktmpdir do |directory|
       input = File.join(directory, "input.png")
@@ -173,6 +342,23 @@ RSpec.describe Lithop::Export do
     end
   end
 
+  it "applies the triangle limit to the sum of all tile cut surfaces" do
+    Dir.mktmpdir do |directory|
+      input = File.join(directory, "green.png")
+      pixels = ([0, 255, 0] * 2).pack("C*")
+      Vips::Image.new_from_memory(pixels, 2, 1, 3, :uchar).pngsave(input)
+      settings = Lithop::Settings.new(
+        width: 2.0, height: 1.0, grid_columns: 2, grid_rows: 1,
+        tile_count: 2, tile_layout: "columns", maximum_triangles: 100
+      )
+      exporter = described_class.new(settings:, project_dir: directory, clock:, random:)
+
+      expect { exporter.call(input) }
+        .to raise_error(Lithop::ConfigurationError, /physical CMYW tiled mesh has 156 triangles/)
+      expect(Dir).not_to exist(File.join(directory, "build", ".tmp-20261006T000000Z-12345678"))
+    end
+  end
+
   it "cleans a failed temporary job without deleting the input image" do
     Dir.mktmpdir do |directory|
       input = File.join(directory, "input.png")
@@ -210,6 +396,35 @@ RSpec.describe Lithop::Export do
       expect { exporter.call(input) }.to raise_error(Interrupt)
       expect(File).to exist(input)
       expect(Dir).not_to exist(temporary)
+      status = JSON.parse(
+        File.read(File.join(directory, "build", ".jobs", "20261006T000000Z-12345678.json"))
+      )
+      expect(status).to include("state" => "cancelled", "phase" => "cancelled")
+    end
+  end
+
+  it "honors a cancellation request and does not publish an incomplete job" do
+    Dir.mktmpdir do |directory|
+      input = File.join(directory, "input.png")
+      Vips::Image.black(2, 2).pngsave(input)
+      job_id = "cancel-request"
+      progress = lambda do |event|
+        next unless event.phase == "image_processing"
+
+        Lithop::JobExecution.request_cancel(project_dir: directory, job_id:)
+      end
+      exporter = described_class.new(
+        settings: Lithop::Settings.new(width: 2.0, height: 2.0, pixel_size: 1.0),
+        project_dir: directory,
+        job_progress: progress,
+        job_id:
+      )
+
+      expect { exporter.call(input) }.to raise_error(Lithop::JobCancelled)
+      expect(Dir).not_to exist(File.join(directory, "build", job_id))
+      expect(Dir).not_to exist(File.join(directory, "build", ".tmp-#{job_id}"))
+      status = JSON.parse(File.read(File.join(directory, "build", ".jobs", "#{job_id}.json")))
+      expect(status.fetch("state")).to eq("cancelled")
     end
   end
 
@@ -307,7 +522,9 @@ RSpec.describe Lithop::Export do
         "width" => 2.0, "height" => 2.0, "depth" => 2.14689422
       )
       expect(manifest.dig("color_model", "layout_profile")).to eq("standard")
-      expect(report.fetch(:plates)).to eq([{ id: 1, name: "lithophane" }])
+      assembly_id = report.fetch(:models).flat_map { |model| model.fetch(:objects) }
+                          .find { |object| object.fetch(:components).positive? }.fetch(:id)
+      expect(report.fetch(:plates)).to eq([{ id: 1, name: "lithophane", object_ids: [assembly_id] }])
       expect(report.fetch(:parts).map { |part| part.fetch(:name) }.join(" ")).not_to match(/Black|margin|frame/i)
       expect(report.fetch(:parts).map { |part| part.fetch(:extruder) }).to all(be_between(1, 4))
     end

@@ -8,7 +8,7 @@ require "zip"
 RSpec.describe "export artifact contract" do
   let(:binary_digests) do
     {
-      "PRINT_README.md" => "3728f87b8240309b584a3a72cb0d8e184895f62b7b0b9166ec48b4ee954eda0a",
+      "PRINT_README.md" => "a006b522adac73b505f048fc617cdabbfab7314fc3401d405ab76177f6b61402",
       "cmyk_white.stl" => "00457d950383f8e76ea3eee0591ee76bc3ac1339dd0bac9b6e42f4d87ba63fed"
     }
   end
@@ -25,7 +25,7 @@ RSpec.describe "export artifact contract" do
   end
   let(:three_mf_digests) do
     {
-      "3D/3dmodel.model" => "55b3323fd7497d0b1e8795a23cd5d49a3f967a82f26edf162fa14e19cc88443c",
+      "3D/3dmodel.model" => "cab601db289b7a2293ac7aef59d066358acfaa7d3f463b11320f70378c9f2f9f",
       "Metadata/layer_config_ranges.xml" => "a95116fadd7522bf5d6d744d3fad15b7014fb28c0553e364cc2b673f5903e42a",
       "Metadata/model_settings.config" => "a7708caa8f6338c088b6cc50211499c94cc37ca5b7e2fdae6b1297187cee8572",
       "Metadata/project_settings.config" => "9f974735b67357579d32abfe31afc5254e70b9eaf999167c0caea7eb883e3e21",
@@ -58,9 +58,9 @@ RSpec.describe "export artifact contract" do
         expect(Digest::SHA256.hexdigest(preview.write_to_memory)).to eq(digest), name
       end
       expect(normalized_json_digest(result.path, "settings.json", "input_path"))
-        .to eq("cfe90f601b0290c6e6a72c022213b0c335ad97541c1f9e6389fb4e93e3851ddd")
+        .to eq("2539f0013ef6011af88fad7d53e5f79a507235bc29e8391242515067677ee1f7")
       expect(normalized_json_digest(result.path, "manifest.json", "job_id"))
-        .to eq("38497c73701f04bec499bc91ee26df17f4b900a0502c9950f8001ee3dddec839")
+        .to eq("3641ad731c3eb868077975276a2f4deeda96580e753dbe2196a7d2cc2dcf345b")
       expect(archive_digests(result.path)).to eq(three_mf_digests)
     end
   end

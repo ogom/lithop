@@ -17,7 +17,9 @@ module Lithop
       raise OptionParser::InvalidArgument, arguments.join(" ") unless arguments.empty?
 
       project_dir, settings, = load_settings(options, keys: CALIBRATION_SETTING_KEYS)
-      result = Calibration::Export.new(settings:, project_dir:).call
+      result = Calibration::Export.new(
+        settings:, project_dir:, job_progress: method(:report_job_progress)
+      ).call
       @out.puts "Generated #{result.patch_count} calibration patches and #{result.triangle_count} 3MF triangles"
       @out.puts "in #{result.path}"
       result.files.each { |file| @out.puts "  #{file}" }

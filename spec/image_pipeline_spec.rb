@@ -5,6 +5,29 @@ require "vips"
 RSpec.describe Lithop::ImagePipeline do
   let(:settings) { Lithop::Settings.new(width: 1.0, height: 1.0, pixel_size: 1.0) }
 
+  it "applies brightness, contrast, and saturation before common image sampling" do
+    Dir.mktmpdir do |directory|
+      gray = write_solid(directory, "gray.png", [96, 96, 96])
+      muted_red = write_solid(directory, "muted-red.png", [220, 160, 160])
+
+      neutral_gray = described_class.new(settings).call(gray)
+      brighter = described_class.new(
+        Lithop::Settings.new(width: 1.0, height: 1.0, pixel_size: 1.0, brightness: 20.0)
+      ).call(gray)
+      contrasted = described_class.new(
+        Lithop::Settings.new(width: 1.0, height: 1.0, pixel_size: 1.0, contrast: 100.0)
+      ).call(gray)
+      neutral_red = described_class.new(settings).call(muted_red)
+      saturated = described_class.new(
+        Lithop::Settings.new(width: 1.0, height: 1.0, pixel_size: 1.0, saturation: 100.0)
+      ).call(muted_red)
+
+      expect(brighter.white_densities.first).to be < neutral_gray.white_densities.first
+      expect(contrasted.white_densities.first).to be > neutral_gray.white_densities.first
+      expect(saturated.cmys.first.sum).to be > neutral_red.cmys.first.sum
+    end
+  end
+
   it "keeps a pale neutral reference color in White while preserving its density" do
     reference = Lithop::Settings.new(
       layout_profile: "standard",

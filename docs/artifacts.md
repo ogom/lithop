@@ -6,7 +6,11 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 
 通常生成は`build/<job_id>/`、校正片生成は`build/<job_id>-calibration/`へ保存します。ジョブIDはUTC時刻とランダム値から作られます。
 
-生成中は`build/.tmp-<job_id>/`を排他的に取得します。失敗または中断した実行は自分が作成した一時領域だけを回収し、入力画像、別の実行の一時領域、完了済みジョブを削除しません。完了済みジョブと同じIDは上書きしません。
+生成中は`build/.tmp-<job_id>/`へ書き込みます。通常生成と校正生成はプロジェクトごとの`build/.lithop.lock`を共有し、同時変換数を1に制限します。変換中に別の変換を開始した場合は待機せず、`another conversion is already running`で失敗します。完了済みジョブと同じIDは上書きしません。
+
+状態は`build/.jobs/<job_id>.json`へ原子的に保存します。`state`は`queued`、`running`、中止要求を受けた`cancelling`、終了状態の`completed`／`failed`／`cancelled`です。`phase`、0〜100の`percent`、メッセージ、開始・更新・終了日時を持ち、完了時だけ`output_path`と`files`を記録します。CLIにも主要工程の進捗を表示します。
+
+`Ctrl-C`などの割り込みと`JobExecution.request_cancel`による中止要求は`cancelled`として記録し、未完成ジョブを公開しません。失敗はエラーのクラスとメッセージを`failed`状態へ記録します。どちらも実行自身が作成した一時領域を回収し、入力画像、別の実行の所有情報がない一時領域、使用中の一時領域、完了済みジョブを削除しません。プロセスが強制終了して回収できなかった所有情報付き一時領域は、所有PIDの終了を確認したうえで次の変換開始時に削除し、残っていた実行状態を`failed`の`recovered`工程へ変更します。
 
 ## 通常ジョブのファイル
 
@@ -27,6 +31,8 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 | `calibration-profile.json` | 実測プロファイルを指定した場合だけ保存するコピー |
 
 標準ジョブは単一プレートと非一様レイヤー情報を持つ`lithop.3mf`を出力します。未使用のCyan、Magenta、Yellowは3MFのメッシュから省略されるため、材料部品は1〜4個です。Whiteは必ず含まれます。`cmyk_white.stl`は比較用で、CMYWの材料分離情報を持ちません。
+
+XYタイルとZ分割のファイル構成、座標、`tile-layout.svg`、マニフェスト記録、4プレート構成は[3MFタイル分割とZ分割](tiling.md)を参照してください。
 
 ## プレビューの座標と値
 
@@ -55,12 +61,21 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
   "crop_position_x": 0.5,
   "crop_position_y": 0.5,
   "crop_scale": 1.0,
+  "brightness": 0.0,
+  "contrast": 0.0,
+  "saturation": 0.0,
   "minimum_thickness": 1.0,
   "maximum_thickness": 2.14689422,
   "pixel_size": 0.22,
   "color_pixel_size": null,
   "grid_columns": null,
   "grid_rows": null,
+  "tile_count": 1,
+  "tile_layout": "auto",
+  "tile_rows": null,
+  "tile_columns": null,
+  "separate_z_parts": false,
+  "color_region_parts": 3,
   "first_layer_height": 0.1,
   "layer_height": 0.1,
   "base_white_layers": 2,
@@ -78,12 +93,14 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
   "effective_color_pixel_size": 0.22,
   "effective_minimum_thickness": 1.0,
   "effective_maximum_thickness": 2.14689422,
+  "resolved_tile_rows": 1,
+  "resolved_tile_columns": 1,
   "columns": 637,
   "rows": 473,
   "pixel_size_x": 0.21978021978021978,
   "pixel_size_y": 0.21987315010570824,
   "schema_version": 1,
-  "generator_version": "0.1.0",
+  "generator_version": "0.2.0",
   "input_path": "/absolute/path/to/image.png",
   "input_settings_path": "/absolute/path/to/config/settings.json",
   "calibration_profile_id": null,

@@ -26,6 +26,7 @@ module Lithop
       validate_input!(image)
       image = image.flatten(background: [255, 255, 255]) if image.has_alpha?
       image = to_srgb(image)
+      image = adjust_image(image)
       sampled = @placement.call(image, @settings.sampling_grid).cast(:uchar)
 
       rgbs = rgb_components(sampled)
@@ -70,6 +71,22 @@ module Lithop
       return image.colourspace(:srgb) if image.get_typeof("icc-profile-data").zero?
 
       image.icc_import(embedded: true, pcs: :xyz).colourspace(:srgb)
+    end
+
+    def adjust_image(image)
+      return image if image_adjustments.none?(&:nonzero?)
+
+      adjusted = image.cast(:float)
+      adjusted += @settings.brightness.fdiv(100) * 255
+      contrast_factor = 1.0 + @settings.contrast.fdiv(100)
+      adjusted = ((adjusted - 127.5) * contrast_factor) + 127.5
+      saturation_factor = 1.0 + @settings.saturation.fdiv(100)
+      luminance = (adjusted[0] * 0.299) + (adjusted[1] * 0.587) + (adjusted[2] * 0.114)
+      luminance + ((adjusted - luminance) * saturation_factor)
+    end
+
+    def image_adjustments
+      [@settings.brightness, @settings.contrast, @settings.saturation]
     end
 
     def color_cells(image)
