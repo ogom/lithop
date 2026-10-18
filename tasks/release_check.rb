@@ -15,6 +15,7 @@ module Lithop
     EXPECTED_FILES = (
       %w[
         CHANGELOG.md
+        docs/images/cmyw-lithophane-preview.png
         LICENSE
         README.md
         RELEASING.md

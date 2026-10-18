@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
     "README.md",
     "RELEASING.md",
     "bin/lithop",
-    "docs/**/*.md",
+    "docs/**/*",
     "lib/**/*.rb",
     "lib/lithop/web/**/*.{erb,css,js}",
     "sig/**/*.rbs"
