@@ -25,6 +25,7 @@
 
 # Local settings
 /config/settings.json
+/config/ui-settings.json
 
 # Local Bambu Studio result
 /result.json
