@@ -1,6 +1,6 @@
 # コマンドリファレンス
 
-このページはCLI構文とオプションの正本です。実行中の版では`lithop --help`、`lithop calibrate --help`、`lithop clean --help`でも確認できます。ソースチェックアウトでは、例の`lithop`を`bundle exec lithop`に読み替えてください。
+このページはCLI構文とオプションの正本です。実行中の版では`lithop --help`、`lithop calibrate --help`、`lithop ui --help`、`lithop clean --help`でも確認できます。ソースチェックアウトでは、例の`lithop`を`bundle exec lithop`に読み替えてください。
 
 ## 画像からリトファンを生成する
 
@@ -158,6 +158,27 @@ lithop calibrate
 
 固定レイアウトで入力画像を使わないため、画像用の`width`、`height`、`margin_*`、画像配置、明るさ・コントラスト・彩度、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。生成物は[校正ジョブのファイル](artifacts.md#校正ジョブのファイル)、測定方法は[色校正](calibration.md)を参照してください。
 
+## ローカルUIを起動する
+
+画像選択、主要設定、プレビュー、進捗・中止、成果物表示を行うブラウザUIを`127.0.0.1`で起動します。
+
+```text
+Usage: lithop ui [--project-dir DIR] [--port PORT]
+```
+
+| オプション | 型 | 既定値 | 説明 |
+| --- | --- | ---: | --- |
+| `--project-dir DIR` | Path | 現在のディレクトリ | 設定を読み、`build/`を作るプロジェクトを選ぶ |
+| `--port PORT` | Integer | `4567` | ローカルUIのポートを1〜65535で指定する |
+| `-v`, `--version` | — | — | バージョンを表示して終了する |
+| `-h`, `--help` | — | — | ヘルプを表示して終了する |
+
+```sh
+lithop ui
+```
+
+表示された`http://127.0.0.1:4567`をブラウザで開きます。詳細は[ローカルブラウザUI](local-ui.md)を参照してください。
+
 ## 生成物を削除する
 
 ### 構文
@@ -188,6 +209,7 @@ lithop clean --project-dir /path/to/project
 | `lithop --version` | バージョンを表示する。短縮形は`lithop -v` |
 | `lithop --help` | 通常生成の構文とオプションを表示する |
 | `lithop calibrate --help` | 校正片生成の構文とオプションを表示する |
+| `lithop ui --help` | ローカルUIの起動オプションを表示する |
 | `lithop clean --help` | 削除コマンドの構文とオプションを表示する |
 
 ## 終了ステータスとエラー

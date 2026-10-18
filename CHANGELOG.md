@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2026-10-18
+
+- Adds a loopback-only Sinatra/ERB/Puma UI with responsive Create, Jobs, and Presets panes.
+- Provides immediate JPEG/PNG/SVG input previews, reusable settings, drafts, and engine-rendered result views.
+- Adds persistent job progress and cancellation, searchable history, result comparison, ZIP downloads, and safe bulk deletion.
+- Bundles the UI assets in the gem and verifies the workflows with Chromium/WebKit Playwright coverage and an installed-gem smoke test.
+
 ## 0.2.0 - 2026-10-16
 
 - Adds exact-count CMYW 3MF tiling, plus optional four-plate output for three Base White-backed CMYW color regions and Top White.

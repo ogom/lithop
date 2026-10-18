@@ -28,13 +28,17 @@ Gem::Specification.new do |spec|
     "bin/lithop",
     "docs/**/*.md",
     "lib/**/*.rb",
+    "lib/lithop/web/**/*.{erb,css,js}",
     "sig/**/*.rbs"
   ]
   spec.bindir = "bin"
   spec.executables = ["lithop"]
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "puma", "~> 7.0"
+  spec.add_dependency "rackup", "~> 2.2"
   spec.add_dependency "rexml", "~> 3.4"
   spec.add_dependency "ruby-vips", "~> 2.3"
   spec.add_dependency "rubyzip", "~> 3.7"
+  spec.add_dependency "sinatra", "~> 4.2"
 end

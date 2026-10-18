@@ -10,6 +10,7 @@ require_relative "../lib/lithop/version"
 
 module Lithop
   # Runs the checks required before publishing a Lithop gem release.
+  # rubocop:disable-next Metrics/ModuleLength
   module ReleaseCheck
     EXPECTED_FILES = (
       %w[
@@ -30,6 +31,12 @@ module Lithop
         lib/lithop/layer_structure.rb
         lib/lithop/sampling_grid.rb
         lib/lithop/version.rb
+        lib/lithop/web/app.rb
+        lib/lithop/web/public/app.css
+        lib/lithop/web/public/app.js
+        lib/lithop/web/server.rb
+        lib/lithop/web/settings_library.rb
+        lib/lithop/web/views/index.erb
         sig/lithop.rbs
       ] + Dir["docs/*.md"]
     ).freeze
@@ -81,7 +88,7 @@ module Lithop
     end
 
     def validate_dependencies(specification)
-      %w[ruby-vips rubyzip].each do |name|
+      %w[puma rackup ruby-vips rubyzip sinatra].each do |name|
         dependency = specification.runtime_dependencies.find { |candidate| candidate.name == name }
         abort "built gem does not depend on #{name}" unless dependency
       end
@@ -97,6 +104,7 @@ module Lithop
 
         install_gem(environment, gem_home, bin_dir, gem_file)
         run_cli(environment, bin_dir)
+        run_ui(environment, directory)
       end
     end
 
@@ -111,6 +119,18 @@ module Lithop
     def run_cli(environment, bin_dir)
       stdout = run!(environment, [File.join(bin_dir, "lithop"), "--version"], "installed CLI")
       abort "installed CLI reported #{stdout.strip.inspect}" unless stdout.strip == Lithop::VERSION
+    end
+
+    def run_ui(environment, project_dir)
+      code = <<~RUBY
+        require "lithop"
+        require "lithop/web/app"
+        app = Lithop::Web::App.configured(project_dir: ENV.fetch("LITHOP_SMOKE_PROJECT"), csrf_token: "smoke")
+        response = Rack::MockRequest.new(app).get("/", "HTTP_HOST" => "127.0.0.1")
+        abort "installed UI did not render bundled assets" unless response.status == 200 && response.body.include?("/app.css")
+      RUBY
+      ui_environment = environment.merge("LITHOP_SMOKE_PROJECT" => project_dir)
+      run!(ui_environment, [RbConfig.ruby, "-e", code], "installed local UI")
     end
 
     def run!(environment, command, description)

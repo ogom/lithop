@@ -76,10 +76,13 @@ module Lithop
     def artifact_files(artifacts)
       files = [
         artifacts.stl_name, *artifacts.three_mf_names, "settings.json", "manifest.json",
-        "preview.png", "transmission.png", "thickness.png",
+        "corrected-input.png", "preview.png", "transmission.png", "thickness.png",
         *Palette::MATERIALS.map { |material| "#{material}-mask.png" }, "PRINT_README.md"
       ]
-      files << "tile-layout.svg" if artifacts.tile_artifacts.length > 1
+      if artifacts.tile_artifacts.length > 1
+        files.concat(artifacts.tile_artifacts.map { |artifact| ExportPreviews.tile_preview_name(artifact) })
+        files << "tile-layout.svg"
+      end
       files << "calibration-profile.json" if @calibration.profile
       files
     end
@@ -100,7 +103,7 @@ module Lithop
       artifacts.tile_artifacts.map do |artifact|
         tile = artifact.tile
         used = Palette::MATERIALS.select { |material| artifact.material_model.materials.include?(material) }
-        {
+        metadata = {
           id: tile.id,
           file: artifact.name,
           row: tile.row,
@@ -112,6 +115,8 @@ module Lithop
           unused_materials: material_names(Palette::MATERIALS - used),
           triangle_count: artifact.three_mf.triangle_count
         }
+        metadata[:preview_file] = ExportPreviews.tile_preview_name(artifact) unless artifacts.tile_artifacts.one?
+        metadata
       end
     end
 

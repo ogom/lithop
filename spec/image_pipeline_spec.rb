@@ -5,6 +5,29 @@ require "vips"
 RSpec.describe Lithop::ImagePipeline do
   let(:settings) { Lithop::Settings.new(width: 1.0, height: 1.0, pixel_size: 1.0) }
 
+  it "renders a bounded placement preview through the common SVG pipeline" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "preview.svg")
+      File.write(
+        path,
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 1">' \
+        '<rect width="2" height="1" fill="#0086D6"/></svg>'
+      )
+      preview_settings = Lithop::Settings.new(
+        width: 140.0, height: 104.0, pixel_size: 0.22, brightness: 5.0,
+        margin_top: 2.0, margin_right: 2.0, margin_bottom: 2.0, margin_left: 2.0
+      )
+
+      png = described_class.new(preview_settings).preview_png(path, maximum_width: 320, maximum_height: 240)
+      image = Vips::Image.new_from_buffer(png, "")
+
+      expect(png).to start_with("\x89PNG\r\n\x1A\n".b)
+      expect(image.width).to be <= 321
+      expect(image.height).to be <= 241
+      expect(image.get("vips-loader")).to eq("pngload_buffer")
+    end
+  end
+
   it "applies brightness, contrast, and saturation before common image sampling" do
     Dir.mktmpdir do |directory|
       gray = write_solid(directory, "gray.png", [96, 96, 96])

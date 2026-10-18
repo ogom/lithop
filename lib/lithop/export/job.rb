@@ -45,9 +45,9 @@ module Lithop
           instrumentation: @instrumentation
         )
         destination, generated = JobDirectory.new(project_dir: @project_dir, job_id:).call do |directory|
-          generation.call(source:, directory:, job_id:)
+          generation.call(source:, directory:, job_id:).tap { job.checkpoint! }
         end
-        job.progress(phase: :publishing, percent: 99, message: "Artifacts published")
+        job.publication_committed!
         Result.new(
           job_id:,
           path: destination,

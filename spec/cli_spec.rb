@@ -62,6 +62,13 @@ RSpec.describe Lithop::CLI do
     expect(error).to start_with("Usage: lithop IMAGE [options]")
   end
 
+  it "rejects an invalid local UI port before starting the server" do
+    status, _output, error = run_cli(["ui", "--port", "0"], cwd: Dir.pwd)
+
+    expect(status).to eq(1)
+    expect(error).to include("port must be from 1 to 65535")
+  end
+
   it "shows current defaults and excludes retired generation option names" do
     out = StringIO.new
 

@@ -5,7 +5,7 @@ module Lithop
   module ExportPreviews
     module_function
 
-    def write(directory, model:, settings:, white_heights: nil)
+    def write(directory, model:, settings:, white_heights: nil, corrected_input: nil)
       heights = white_heights && cell_heights(white_heights, settings.columns, settings.rows)
       options = {
         model:,
@@ -19,7 +19,31 @@ module Lithop
       Palette::MATERIALS.each do |material|
         Preview.write_mask(File.join(directory, "#{material}-mask.png"), model:, material:)
       end
+      File.binwrite(File.join(directory, "corrected-input.png"), corrected_input) if corrected_input
     end
+
+    def write_tiles(directory, tile_artifacts:, settings:, white_heights:)
+      return if tile_artifacts.one?
+
+      heights = cell_heights(white_heights, settings.columns, settings.rows)
+      tile_artifacts.each do |artifact|
+        tile = artifact.tile
+        tile_heights = (tile.row_start...tile.row_end).flat_map do |row|
+          offset = (row * settings.columns) + tile.column_start
+          heights.slice(offset, artifact.material_model.columns)
+        end
+        Preview.write_material(
+          File.join(directory, tile_preview_name(artifact)),
+          model: artifact.material_model,
+          minimum: settings.effective_minimum_thickness,
+          maximum: settings.effective_maximum_thickness,
+          heights: tile_heights,
+          transmission_gamma: 0.5
+        )
+      end
+    end
+
+    def tile_preview_name(artifact) = artifact.name.sub(/\.3mf\z/, "-preview.png")
 
     def cell_heights(vertex_heights, columns, rows)
       stride = columns + 1

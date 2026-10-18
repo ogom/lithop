@@ -9,7 +9,15 @@ This checklist prepares and publishes one immutable gem version. Run every comma
 3. Confirm the README installation and usage examples match the release.
 4. Manually open the external links in `README.md` and `docs/`; automated tests intentionally validate only local links and anchors.
 5. Commit all intended files and verify that `git status --short` is empty.
-6. Run the non-publishing release check:
+6. When the local UI changed, run the Chromium and WebKit browser suite with the development-only Node.js 22 toolchain:
+
+```sh
+npm install
+npx playwright install chromium webkit
+npm run test:browser
+```
+
+7. Run the non-publishing release check:
 
 ```sh
 bundle exec rake release:check
@@ -49,15 +57,15 @@ Alternatively, configure a RubyGems.org trusted publisher for this repository an
 bundle exec rake release
 ```
 
-After the tag exists on GitHub, create a GitHub Release and attach the exact gem that passed validation. Replace `0.2.0` for later versions:
+After the tag exists on GitHub, create a GitHub Release and attach the exact gem that passed validation. Replace `0.3.0` for later versions:
 
 ```sh
-gh release create v0.2.0 --verify-tag --generate-notes
+gh release create v0.3.0 --verify-tag --generate-notes
 ```
 
 Finally, install the published version in a clean environment and verify the CLI:
 
 ```sh
-gem install lithop -v 0.2.0
+gem install lithop -v 0.3.0
 lithop --version
 ```

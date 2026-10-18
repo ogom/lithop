@@ -43,7 +43,7 @@ module Lithop
       report_estimate(tile_estimates)
       report_job_progress(:artifact_write, 50, "Writing model artifacts")
       artifacts = write_artifacts(
-        directory, geometry, material_model, tile_layout, white_heights
+        directory, geometry, material_model, tile_layout, white_heights, image.corrected_preview_png
       )
       report_job_progress(:metadata_write, 95, "Writing job metadata")
       write_supporting_files(directory, source, job_id, artifacts)
@@ -135,7 +135,7 @@ module Lithop
       raise ConfigurationError, @settings.triangle_limit_message("physical CMYW tiled mesh", count)
     end
 
-    def write_artifacts(directory, geometry, material_model, tile_layout, white_heights)
+    def write_artifacts(directory, geometry, material_model, tile_layout, white_heights, corrected_input)
       stl_name = "cmyk_white.stl"
       triangle_count = @instrumentation.measure(:stl_write) do
         STL.write(File.join(directory, stl_name), geometry.each_triangle)
@@ -160,7 +160,7 @@ module Lithop
       end
       report_job_progress(:preview_write, 85, "Writing previews")
       @instrumentation.measure(:preview_write) do
-        ExportPreviews.write(directory, model: material_model, settings: @settings, white_heights:)
+        write_previews(directory, material_model, tile_artifacts, white_heights, corrected_input)
       end
       ExportArtifacts.new(
         stl_name:,
@@ -169,6 +169,13 @@ module Lithop
         material_model:,
         tile_layout:
       )
+    end
+
+    def write_previews(directory, material_model, tile_artifacts, white_heights, corrected_input)
+      ExportPreviews.write(
+        directory, model: material_model, settings: @settings, white_heights:, corrected_input:
+      )
+      ExportPreviews.write_tiles(directory, tile_artifacts:, settings: @settings, white_heights:)
     end
 
     def write_supporting_files(directory, source, job_id, artifacts)

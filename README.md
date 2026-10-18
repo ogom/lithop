@@ -2,7 +2,7 @@
 
 Create backlit color lithophanes locally.
 
-Lithop is a command-line CMYW color lithophane generator. It turns a JPEG, PNG, or validated self-contained SVG image into a single-plate multipart CMYW 3MF and a White reference STL without uploading, modifying, or copying the source image into the output job.
+Lithop is a local CMYW color lithophane generator with a CLI and browser UI. It turns a JPEG, PNG, or validated self-contained SVG image into a single-plate multipart CMYW 3MF and a White reference STL without uploading the source image or copying it into the output job.
 
 ## Status and safety
 
@@ -30,15 +30,15 @@ Before printing, inspect every layer and confirm the Cyan, Magenta, Yellow, and 
 
 ## Install
 
-To install the 0.2.0 release from RubyGems, install libvips and the matching Lithop version:
+To install Lithop 0.3.0 from RubyGems, install libvips and the matching Lithop version:
 
 ```sh
 brew install vips
-gem install lithop -v 0.2.0
+gem install lithop -v 0.3.0
 lithop --version
 ```
 
-The version command must print `0.2.0`.
+The version command must print `0.3.0`.
 
 To work from a source checkout instead:
 
@@ -60,6 +60,14 @@ From a source checkout, use the bundled sample and a coarse cell size for a fast
 ```sh
 bundle exec lithop examples/cmy-fine-line.svg --width 20 --height 15 --pixel-size 0.5
 ```
+
+To use the local browser UI, start its loopback-only server and open the displayed URL:
+
+```sh
+lithop ui
+```
+
+The UI separates creation, jobs, and reusable presets into responsive panes, with drag-and-drop image selection, grouped settings, an engine-rendered input preview, persistent job progress and cancellation, side-by-side result views, and per-job artifact management. Sinatra, ERB, Puma, CSS, and JavaScript are included in the gem, so the workflow remains local and works offline after installation. Playwright is used only for source-checkout browser tests. See [local browser UI](docs/local-ui.md).
 
 The standard command generates the 140 × 104 × 2.14689422 mm, 0.2 mm-nozzle layout:
 
@@ -100,13 +108,15 @@ The command-line options can override individual profile values. Use `--color-pi
 ## Other commands
 
 - `lithop calibrate` creates a 140 × 104 mm calibration SVG and matching printable 3MF with all 120 seven-layer recipes, eight White thickness stages, and a measurement-profile template. A completed measured profile can select both color recipes and the physical White height used by the 3MF, STL, previews, thickness map, and material masks. See [color calibration](docs/calibration.md).
+- `lithop ui` starts the local browser UI on `127.0.0.1:4567`. See [local browser UI](docs/local-ui.md).
 - `lithop clean` permanently removes the selected project's complete `build/` directory, not one job. See the [command reference](docs/command.md#生成物を削除する) before using it.
-- `lithop --help`, `lithop calibrate --help`, and `lithop clean --help` show the current command syntax.
+- `lithop --help`, `lithop calibrate --help`, `lithop ui --help`, and `lithop clean --help` show the current command syntax.
 
 ## Documentation
 
 - [Documentation index and verification status](docs/README.md)
 - [Installation and basic use](docs/getting-started.md)
+- [Local browser UI](docs/local-ui.md)
 - [Bambu Studio verification and printing](docs/bambu-studio.md)
 - [Options and settings](docs/config.md)
 - [Artifacts and generation records](docs/artifacts.md)

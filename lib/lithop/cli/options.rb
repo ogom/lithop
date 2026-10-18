@@ -48,6 +48,19 @@ module Lithop
       end
     end
 
+    def ui(options, out)
+      OptionParser.new do |parser|
+        parser.banner = "Usage: lithop ui [--project-dir DIR] [--port PORT]"
+        parser.on("--project-dir DIR", "Project directory containing config/ and build/") do |value|
+          options[:project_dir] = value
+        end
+        parser.on("--port PORT", Integer, "Local UI port (default: 4567)") do |value|
+          options[:port] = value
+        end
+        add_information(parser, out)
+      end
+    end
+
     def add_print_settings(parser, options)
       parser.on("--first-layer-height MM", Float, "First layer height (default: 0.1)") do |value|
         options[:first_layer_height] = value

@@ -28,9 +28,9 @@ module Lithop
         )
         execution.call do |job|
           destination, generated = JobDirectory.new(project_dir: @project_dir, job_id:).call do |directory|
-            generate(directory, job_id, job)
+            generate(directory, job_id, job).tap { job.checkpoint! }
           end
-          job.progress(phase: :publishing, percent: 99, message: "Calibration artifacts published")
+          job.publication_committed!(message: "Calibration artifacts published")
           Result.new(job_id:, path: destination, files: generated.fetch(:files),
                      triangle_count: generated.fetch(:triangle_count), patch_count: generated.fetch(:patch_count))
         end

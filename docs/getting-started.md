@@ -13,15 +13,15 @@ Lithopは、画像からカラーLithophane（リトファン）の3MFとWhite�
 
 ## インストール
 
-公開版0.2.0を使う場合は、libvipsとバージョンを指定したLithopをインストールします。
+0.3.0を使う場合は、libvipsとバージョンを指定したLithopをインストールします。
 
 ```sh
 brew install vips
-gem install lithop -v 0.2.0
+gem install lithop -v 0.3.0
 lithop --version
 ```
 
-`lithop --version`が`0.2.0`を表示することを確認します。
+`lithop --version`が`0.3.0`を表示することを確認します。
 
 ソースチェックアウトから実行する場合は、代わりに次を実行します。
 
