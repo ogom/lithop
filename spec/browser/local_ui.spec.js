@@ -62,6 +62,9 @@ test("keeps the selected image and settings while creating and reviewing a job",
   await expect(page.locator("#job-panel")).toBeVisible();
   await expect(page.locator("#job-state")).toHaveText("完了");
   await expect(page.locator("#result-image")).toBeVisible();
+  await expect(page.locator("#result-tabs button")).toHaveText([
+    "CMYW", "Cyan", "Magenta", "Yellow", "White", "透過明度", "厚み"
+  ]);
   await page.getByRole("tab", { name: "成果物", exact: true }).click();
   await expect(page.locator('#artifact-list a[href$="lithop.3mf"]')).toBeVisible();
   await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
@@ -275,6 +278,9 @@ test("links the tile overview to every model and shows its physical placement", 
   await page.locator("#separate-z-parts").check();
   await startJob(page, example);
   await expect(page.locator("#job-state")).toHaveText("完了");
+  await expect(page.locator("#result-tabs button")).toHaveText([
+    "CMYW", "Cyan", "Magenta", "Yellow", "White", "透過明度", "厚み", "タイル"
+  ]);
   await page.getByRole("tab", { name: "成果物", exact: true }).click();
 
   const mapTiles = page.locator(".tile-map button");
@@ -533,6 +539,9 @@ test("compares two completed jobs with synchronized preview choices and setting 
   await page.locator("#compare-jobs").click();
 
   await expect(page.locator("#job-compare-dialog")).toBeVisible();
+  await expect(page.locator("#job-compare-kind option")).toHaveText([
+    "CMYW", "Cyan", "Magenta", "Yellow", "White", "透過明度", "厚み"
+  ]);
   await expect(page.locator("#compare-a-meta")).toContainText("browser-job-");
   await expect(page.locator("#compare-b-meta")).toContainText("browser-job-");
   await expect(page.locator("#job-compare-differences")).toContainText("明るさ");
