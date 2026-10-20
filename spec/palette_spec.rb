@@ -3,6 +3,11 @@
 RSpec.describe Lithop::Palette do
   subject(:palette) { described_class.new }
 
+  it "loads the bundled Rust palette extension" do
+    expect(Lithop::Native.available?).to be(true)
+    expect(Lithop::Native.backend).to eq(:rust)
+  end
+
   it "enumerates every seven-layer CMYW recipe by default" do
     expect(palette.recipes.length).to eq(120)
     expect(palette.recipes).to all(satisfy { |recipe| recipe.layer_count == 7 })
@@ -70,5 +75,21 @@ RSpec.describe Lithop::Palette do
 
   it "rejects invalid CMY samples" do
     expect { palette.nearest([1.0, -0.1, 0.5]) }.to raise_error(Lithop::InputError, /CMY/)
+  end
+
+  it "selects a batch with exactly the same result as individual selection" do
+    cmys = Array.new(256) { [rand, rand, rand] }
+
+    expect(palette.nearest_many(cmys)).to eq(cmys.map { |cmy| palette.nearest(cmy) })
+  end
+
+  it "can disable native palette selection for comparison" do
+    previous = ENV.fetch("LITHOP_DISABLE_NATIVE", nil)
+    ENV["LITHOP_DISABLE_NATIVE"] = "1"
+
+    expect(Lithop::Native.backend).to eq(:ruby)
+    expect(palette.nearest_many([[1.0, 0.0, 0.0]]).first.cyan).to eq(7)
+  ensure
+    ENV["LITHOP_DISABLE_NATIVE"] = previous
   end
 end

@@ -91,13 +91,14 @@ module Lithop
       File.write(path, document(settings:, layout:))
     end
 
-    def document(settings:, layout:)
+    def document(settings:, layout:, background: true)
       rectangles = layout.tiles.map { |tile| tile_element(settings, tile) }.join("\n")
+      fill = background ? "#fff" : "none"
       <<~SVG
         <?xml version="1.0" encoding="UTF-8"?>
         <svg xmlns="http://www.w3.org/2000/svg" width="#{settings.width}mm" height="#{settings.height}mm"
              viewBox="0 0 #{settings.width} #{settings.height}">
-          <rect width="#{settings.width}" height="#{settings.height}" fill="#fff" stroke="#000" stroke-width="0.4"/>
+          <rect width="#{settings.width}" height="#{settings.height}" fill="#{fill}" stroke="#000" stroke-width="0.4"/>
         #{rectangles}
         </svg>
       SVG

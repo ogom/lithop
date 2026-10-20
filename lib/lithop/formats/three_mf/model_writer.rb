@@ -78,7 +78,7 @@ module Lithop
           ThreeMFPartWriter.new(archive: @archive, profile: @profile).write(object_id, part, mesh)
         end
         part.triangles.release_cache! if part.triangles.respond_to?(:release_cache!)
-        vertex_count += mesh.vertices.length
+        vertex_count += mesh.vertex_count
         triangle_counts[part.material] = triangle_counts.fetch(part.material, 0) + mesh.triangle_count
       end
       Result.new(
@@ -96,7 +96,7 @@ module Lithop
       result
     end
 
-    # rubocop:disable-next Metrics/AbcSize
+    # rubocop:disable-next Metrics/AbcSize, Metrics/MethodLength
     def write_external_parts(object_ids, assemblies)
       parts_by_object_id = object_ids.zip(@parts).to_h
       vertex_count = 0
@@ -106,22 +106,26 @@ module Lithop
         measure_xml do
           @archive.write(submodel_header)
           write_materials
-          assembly.object_ids.each do |object_id|
-            part = parts_by_object_id.fetch(object_id)
-            mesh = @instrumentation.measure(:three_mf_indexing) do
-              ThreeMFMesh.new(triangles: part.triangles)
-            end
-            center = mesh_center(mesh)
-            assembly.component_origins[object_id] = component_origin(
-              center, assembly.component_origins.fetch(object_id)
-            )
+        end
+        assembly.object_ids.each do |object_id|
+          part = parts_by_object_id.fetch(object_id)
+          mesh = @instrumentation.measure(:three_mf_indexing) do
+            ThreeMFMesh.new(triangles: part.triangles)
+          end
+          center = mesh_center(mesh)
+          assembly.component_origins[object_id] = component_origin(
+            center, assembly.component_origins.fetch(object_id)
+          )
+          measure_xml do
             ThreeMFPartWriter.new(
               archive: @archive, profile: @profile, production: true, origin: center
             ).write(object_id, part, mesh)
-            part.triangles.release_cache! if part.triangles.respond_to?(:release_cache!)
-            vertex_count += mesh.vertices.length
-            triangle_counts[part.material] = triangle_counts.fetch(part.material, 0) + mesh.triangle_count
           end
+          part.triangles.release_cache! if part.triangles.respond_to?(:release_cache!)
+          vertex_count += mesh.vertex_count
+          triangle_counts[part.material] = triangle_counts.fetch(part.material, 0) + mesh.triangle_count
+        end
+        measure_xml do
           @archive.write("  </resources>\n  <build/>\n</model>\n")
         end
       end
@@ -252,8 +256,7 @@ module Lithop
     end
 
     def mesh_center(mesh)
-      axes = mesh.vertices.transpose
-      axes.map { |values| (values.min + values.max) / 2.0 }
+      mesh.center
     end
 
     def component_origin(center, base_origin)

@@ -83,7 +83,7 @@ RSpec.describe "Human-facing documentation" do
     index = DocumentationHelpers::ROOT.join("docs/README.md").read
     expected = %w[
       getting-started.md bambu-studio.md troubleshooting.md artifacts.md
-      config.md command.md color-model.md calibration.md
+      config.md command.md color-model.md calibration.md local-ui.md
     ]
 
     expect(expected).to all(satisfy { |target| index.include?("](#{target})") })
@@ -121,6 +121,7 @@ RSpec.describe "Human-facing documentation" do
     sections = {
       generation: "画像からリトファンを生成する",
       calibration: "校正片を生成する",
+      ui: "ローカルUIを起動する",
       clean: "生成物を削除する"
     }
 

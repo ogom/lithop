@@ -13,7 +13,7 @@ Lithopは、1枚では印刷できない大きさのリトファンを、指定�
 | Z方向の分割 | `separate_z_parts: true` | 各3MFに、3つの`Color region`と`Top White`の4プレート |
 | XYとZの併用 | 両方を指定 | タイルごとに4プレートを持つ3MF |
 
-`cmyk_white.stl`、`preview.png`、`transmission.png`、`thickness.png`、材料マスクは、常に分割前の完成全体を表します。XY分割時だけカラー3MFは`tiles/`へ出力され、ルートに`lithop.3mf`は作りません。
+`cmyk_white.stl`、`preview.png`、`transmission.png`、`thickness.png`、材料マスクは、常に分割前の完成全体を表します。XY分割時だけカラー3MFは`tiles/`へ出力され、ルートに`lithop.3mf`は作りません。各3MFに対応する`tiles/tile_rNN_cNN-preview.png`も生成し、ローカルUIの変換ジョブでは全タイルを同時に確認できます。
 
 ## XY方向のタイル分割
 
@@ -113,7 +113,9 @@ build/<job_id>/
 ├── tile-layout.svg
 ├── tiles/
 │   ├── tile_r01_c01.3mf  # Color region 1–3、Top Whiteの4プレート
-│   └── tile_r01_c02.3mf  # Color region 1–3、Top Whiteの4プレート
+│   ├── tile_r01_c01-preview.png
+│   ├── tile_r01_c02.3mf  # Color region 1–3、Top Whiteの4プレート
+│   └── tile_r01_c02-preview.png
 ├── manifest.json
 ├── settings.json
 └── preview.png ほか

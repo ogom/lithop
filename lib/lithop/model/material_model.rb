@@ -17,6 +17,7 @@ module Lithop
         pigment_order: settings.pigment_order
       )
       @settings = settings
+      @material_arrays = {}
       validate_samples!(cmys, heights, cell_cmys)
       @cells = build_cells(cmys, heights, cell_cmys).freeze
       maximum_layers = cells.map { |cell| cell.materials.length }.max
@@ -31,7 +32,9 @@ module Lithop
     end
 
     def materials
-      @materials ||= cells.flat_map(&:materials).uniq.freeze
+      @materials ||= cells.each_with_object({}) do |cell, result|
+        cell.materials.each { |material| result[material] = true }
+      end.keys.freeze
     end
 
     def recipe_counts
@@ -63,12 +66,21 @@ module Lithop
     end
 
     def build_cells(cmys, heights, cell_cmys)
-      Array.new(rows * columns) do |index|
+      cell_heights = Array.new(rows * columns)
+      cell_colors = Array.new(rows * columns) do |index|
         row, column = index.divmod(columns)
         cmy = cell_cmys ? cell_cmys.fetch(index) : average(corners(cmys, row, column))
-        height = @settings.quantize_thickness(average(corners(heights, row, column)))
-        recipe = @palette.nearest(cmy)
-        Cell.new(height:, recipe:, materials: materials_for(recipe, height).freeze)
+        cell_heights[index] = @settings.quantize_thickness(average(corners(heights, row, column)))
+        cmy
+      end
+      recipes = if @palette.respond_to?(:nearest_many)
+                  @palette.nearest_many(cell_colors)
+                else
+                  cell_colors.map { |cmy| @palette.nearest(cmy) }
+                end
+      cell_heights.zip(recipes).map do |height, recipe|
+        materials = @material_arrays[[recipe, height]] ||= materials_for(recipe, height).freeze
+        Cell.new(height:, recipe:, materials:)
       end
     end
 

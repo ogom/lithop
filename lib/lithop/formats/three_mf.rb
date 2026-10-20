@@ -18,7 +18,7 @@ module Lithop
     MODEL_RELATIONSHIP = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
     MODEL_CONTENT_TYPE = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
     ZIP_MUTEX = Mutex.new
-    # Triangles are indexed and then serialized, so their enumerable must be replayable.
+    # The Rust indexer consumes triangles once; the Ruby comparison path requires replayable input.
     Part = Data.define(:material, :triangles, :name, :region, :build_z_offset) do
       def initialize(material:, triangles:, name: nil, region: nil, build_z_offset: 0.0)
         super

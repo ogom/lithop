@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= h @csrf_token %>">
+  <title>Lithop Local UI</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="メニューを開く">☰</button>
+    <div class="brand-block">
+      <p class="eyebrow">LOCAL CMYW WORKSPACE</p>
+      <a class="brand" href="/?view=create" data-view-target="create">Lithop</a>
+    </div>
+    <div class="header-context">
+      <span class="project-name"><%= h @project_name %></span>
+      <span aria-hidden="true">/</span>
+      <strong id="current-view-label"><%= { "create" => "作成", "jobs" => "ジョブ", "presets" => "プリセット" }.fetch(@initial_view) %></strong>
+    </div>
+    <div id="global-job-control" class="global-job-control" <%= "hidden" unless @selected_job_id %>>
+      <button id="global-job-link" class="header-action" type="button"><span id="global-job-label">ジョブを取得中</span><small id="global-job-percent">0%</small></button>
+      <button id="global-cancel-button" class="header-action danger-text" type="button">停止</button>
+    </div>
+    <button id="help-button" class="header-action" type="button">使い方</button>
+    <span class="local-badge">127.0.0.1</span>
+  </header>
+
+  <main class="workspace" data-selected-job="<%= h @selected_job_id %>" data-view="<%= h @initial_view %>">
+    <div id="page-notice" class="notice error" role="alert" <%= "hidden" unless @error %>><%= h @error %></div>
+
+    <div class="app-shell">
+      <nav id="primary-navigation" class="primary-navigation" aria-label="主メニュー">
+        <button type="button" data-view-target="create" <%= 'aria-current="page"' if @initial_view == "create" %>><span>01</span>作成<small>画像と設定</small></button>
+        <button type="button" data-view-target="jobs" <%= 'aria-current="page"' if @initial_view == "jobs" %>><span>02</span>ジョブ<small>履歴と成果物</small></button>
+        <button type="button" data-view-target="presets" <%= 'aria-current="page"' if @initial_view == "presets" %>><span>03</span>プリセット<small>設定の再利用</small></button>
+      </nav>
+      <div id="navigation-scrim" class="navigation-scrim" hidden></div>
+      <div class="app-content">
+
+    <section id="view-create" class="app-view" data-app-view="create" aria-labelledby="create-view-title" <%= "hidden" unless @initial_view == "create" %>>
+    <h1 id="create-view-title" class="view-title" tabindex="-1">作成</h1>
+    <div class="workspace-primary">
+    <section class="panel editor-panel">
+      <div class="section-heading">
+        <div><p class="step">01 / INPUT</p><h2>画像と設定</h2></div>
+        <span class="context-badge">編集中</span>
+      </div>
+
+      <form id="conversion-form" action="/jobs" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<%= h @csrf_token %>">
+        <input id="preview-id" type="hidden" name="preview_id" value="">
+
+        <label id="file-picker" class="file-picker" for="image-input" tabindex="0">
+          <span class="file-title">画像を選択またはドロップ</span>
+          <span id="file-name">ファイルをここへ選択</span>
+          <input id="image-input" name="image" type="file" accept=".jpeg,.jpg,.png,.svg,image/jpeg,image/png,image/svg+xml" required>
+        </label>
+
+        <details class="settings-section" open>
+          <summary><span>基本設定</span><small>寸法とセル</small></summary>
+          <div class="settings-body">
+            <div class="inline-actions">
+              <label class="check-label"><input id="aspect-lock" type="checkbox" checked>縦横比を固定</label>
+              <button id="swap-dimensions" class="text-button" type="button">幅と高さを交換</button>
+              <button class="text-button section-reset" type="button">初期値へ戻す</button>
+            </div>
+            <div class="form-grid">
+              <label>幅 <span>mm</span><input id="width" name="width" type="number" min="0.01" step="0.01" value="<%= h @values['width'] %>" data-default="<%= h @values['width'] %>" required></label>
+              <label>高さ <span>mm</span><input id="height" name="height" type="number" min="0.01" step="0.01" value="<%= h @values['height'] %>" data-default="<%= h @values['height'] %>" required></label>
+              <label>XYセル <span>mm</span><input name="pixel_size" type="number" min="0.01" step="0.01" value="<%= h @values['pixel_size'] %>" data-default="<%= h @values['pixel_size'] %>" required></label>
+              <label>色セル <span>mm</span><input name="color_pixel_size" type="number" min="0.01" step="0.01" value="<%= h @values['color_pixel_size'] %>" data-default="<%= h @values['color_pixel_size'] %>" placeholder="XYセルと同じ"></label>
+            </div>
+          </div>
+        </details>
+
+        <details class="settings-section" open>
+          <summary><span>画像配置</span><small>収め方とクロップ</small></summary>
+          <div class="settings-body">
+            <div class="section-actions"><button class="text-button section-reset" type="button">初期値へ戻す</button></div>
+            <div class="form-grid">
+              <label>配置
+                <select name="image_fit" id="image-fit" data-default="<%= h @values['image_fit'] %>">
+                  <option value="cover" <%= "selected" if selected?(:image_fit, "cover") %>>全面に配置</option>
+                  <option value="contain" <%= "selected" if selected?(:image_fit, "contain") %>>全体を収める</option>
+                </select>
+              </label>
+              <label class="range-field">横位置 <span>0–1</span>
+                <input class="range-control" type="range" min="0" max="1" step="0.01" data-sync="crop-x" aria-label="横位置スライダー">
+                <input id="crop-x" name="crop_position_x" type="number" min="0" max="1" step="0.01" value="<%= h @values['crop_position_x'] %>" data-default="<%= h @values['crop_position_x'] %>" required>
+              </label>
+              <label class="range-field">縦位置 <span>0–1</span>
+                <input class="range-control" type="range" min="0" max="1" step="0.01" data-sync="crop-y" aria-label="縦位置スライダー">
+                <input id="crop-y" name="crop_position_y" type="number" min="0" max="1" step="0.01" value="<%= h @values['crop_position_y'] %>" data-default="<%= h @values['crop_position_y'] %>" required>
+              </label>
+              <label class="range-field">クロップ倍率 <span>0–1</span>
+                <input class="range-control" type="range" min="0.01" max="1" step="0.01" data-sync="crop-scale" aria-label="クロップ倍率スライダー">
+                <input id="crop-scale" name="crop_scale" type="number" min="0.01" max="1" step="0.01" value="<%= h @values['crop_scale'] %>" data-default="<%= h @values['crop_scale'] %>" required>
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <details class="settings-section" open>
+          <summary><span>画像調整</span><small>明るさ・コントラスト・彩度</small></summary>
+          <div class="settings-body">
+            <div class="section-actions"><button class="text-button section-reset" type="button">初期値へ戻す</button></div>
+            <div class="adjustment-grid">
+              <% { "brightness" => "明るさ", "contrast" => "コントラスト", "saturation" => "彩度" }.each do |key, label| %>
+                <label class="range-field"><%= label %> <span>%</span>
+                  <input class="range-control" type="range" min="-100" max="100" step="1" data-sync="<%= key %>" aria-label="<%= label %>スライダー">
+                  <input id="<%= key %>" name="<%= key %>" type="number" min="-100" max="100" step="1" value="<%= h @values[key] %>" data-default="<%= h @values[key] %>" required>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </details>
+
+        <details class="settings-section">
+          <summary><span>分割</span><small>XYタイルとZプレート</small></summary>
+          <div class="settings-body">
+            <div class="section-actions"><button class="text-button section-reset" type="button">初期値へ戻す</button></div>
+            <div class="form-grid split-grid">
+              <label>タイル数<input name="tile_count" type="number" min="1" step="1" value="<%= h @values['tile_count'] %>" data-default="<%= h @values['tile_count'] %>" required></label>
+              <label>配置
+                <select name="tile_layout" id="tile-layout" data-default="<%= h @values['tile_layout'] %>">
+                  <% %w[auto columns rows grid].each do |layout| %>
+                    <option value="<%= layout %>" <%= "selected" if selected?(:tile_layout, layout) %>><%= layout %></option>
+                  <% end %>
+                </select>
+              </label>
+              <label class="grid-only">行数<input name="tile_rows" type="number" min="1" step="1" value="<%= h @values['tile_rows'] %>" data-default="<%= h @values['tile_rows'] %>"></label>
+              <label class="grid-only">列数<input name="tile_columns" type="number" min="1" step="1" value="<%= h @values['tile_columns'] %>" data-default="<%= h @values['tile_columns'] %>"></label>
+              <label class="check-label z-parts-toggle"><input id="separate-z-parts" name="separate_z_parts" type="checkbox" value="1" data-default="<%= checked?(:separate_z_parts) ? '1' : '0' %>" <%= "checked" if checked?(:separate_z_parts) %>>Z方向を別プレートに分割</label>
+              <label id="color-region-field">色領域の分割数<input id="color-region-parts" name="color_region_parts" type="number" min="1" max="7" step="1" value="<%= h @values['color_region_parts'] %>" data-default="<%= h @values['color_region_parts'] %>" required></label>
+            </div>
+            <p id="z-parts-summary" class="fine-print"></p>
+            <div id="z-parts-diagram" class="z-parts-diagram" aria-label="Z方向のプレート構成"></div>
+          </div>
+        </details>
+
+        <details class="settings-section">
+          <summary><span>詳細設定</span><small>厚み・余白・ノズル</small></summary>
+          <div class="settings-body">
+            <div class="section-actions"><button class="text-button section-reset" type="button">初期値へ戻す</button></div>
+            <div class="form-grid">
+              <label>最小厚み <span>mm</span><input name="minimum_thickness" type="number" min="0.01" step="0.01" value="<%= h @values['minimum_thickness'] %>" data-default="<%= h @values['minimum_thickness'] %>" required></label>
+              <label>最大厚み <span>mm</span><input name="maximum_thickness" type="number" min="0.01" step="0.00000001" value="<%= h @values['maximum_thickness'] %>" data-default="<%= h @values['maximum_thickness'] %>" required></label>
+              <label>ノズル <span>mm</span>
+                <select name="nozzle_diameter" data-default="<%= h @values['nozzle_diameter'] %>">
+                  <option value="0.2" <%= "selected" if selected?(:nozzle_diameter, 0.2) %>>0.2</option>
+                  <option value="0.4" <%= "selected" if selected?(:nozzle_diameter, 0.4) %>>0.4</option>
+                </select>
+              </label>
+            </div>
+            <div class="quad-grid">
+              <% { "margin_top" => "上余白", "margin_right" => "右余白", "margin_bottom" => "下余白", "margin_left" => "左余白" }.each do |key, label| %>
+                <label><%= label %> <span>mm</span><input name="<%= key %>" type="number" min="0" step="0.1" value="<%= h @values[key] %>" data-default="<%= h @values[key] %>" required></label>
+              <% end %>
+            </div>
+          </div>
+        </details>
+
+        <div class="settings-shortcut">
+          <div><strong>設定の再利用</strong><small>プリセットと下書きは専用画面で管理します。</small></div>
+          <button class="secondary-button" type="button" data-view-target="presets">プリセットを開く</button>
+        </div>
+
+        <p id="form-error" class="notice error" role="alert" hidden></p>
+        <section id="draft-summary" class="draft-summary" aria-labelledby="draft-summary-title">
+          <div class="summary-heading"><strong id="draft-summary-title">変換する内容</strong><span id="draft-summary-change">未実行</span></div>
+          <dl id="draft-summary-values"></dl>
+        </section>
+        <div class="submit-bar">
+          <span id="draft-state" aria-live="polite">画像を選択してください</span>
+          <button id="submit-button" class="primary-button" type="submit">変換を開始</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel preview-panel">
+      <div class="section-heading compact-heading">
+        <div><p class="step">02 / PREVIEW</p><h2>入力プレビュー</h2></div>
+        <span id="preview-dimensions" class="dimension-badge"><%= h @values['width'] %> × <%= h @values['height'] %> mm</span>
+      </div>
+      <div class="preview-toolbar" data-viewer="source-preview">
+        <button type="button" data-view-action="out" aria-label="縮小">−</button><output data-view-scale>全体</output>
+        <button type="button" data-view-action="in" aria-label="拡大">＋</button><button type="button" data-view-action="actual">100%</button><button type="button" data-view-action="reset">全体表示</button>
+        <button type="button" data-expand-viewer="source-preview" disabled>大きく表示</button>
+        <label class="overlay-toggle"><input id="toggle-tile-overlay" type="checkbox">タイル境界</label>
+        <label>背景<select data-view-background><option value="checker">透明</option><option value="light">白</option><option value="gray">灰</option><option value="dark">暗色</option></select></label>
+      </div>
+      <div id="source-preview" class="image-stage preview-viewport" data-background="checker">
+        <img id="source-image" alt="選択した入力画像" draggable="false" hidden>
+        <img id="tile-overlay" class="tile-overlay" alt="タイル境界" draggable="false" hidden>
+        <p id="source-placeholder" role="status" aria-live="polite">画像未選択</p>
+      </div>
+      <p class="fine-print"><span data-view-hint="source-preview">拡大するとドラッグで表示位置を移動できます。</span> 倍率は画面表示だけに作用し、印刷寸法を変更しません。</p>
+    </section>
+    </div>
+
+    </section>
+
+    <section id="view-jobs" class="app-view" data-app-view="jobs" aria-labelledby="jobs-view-title" <%= "hidden" unless @initial_view == "jobs" %>>
+    <h1 id="jobs-view-title" class="view-title" tabindex="-1">ジョブ</h1>
+    <div class="jobs-workspace">
+    <section id="job-panel" class="panel job-panel" <%= "hidden" unless @selected_job_id %>>
+      <button id="back-to-job-list" class="text-button back-to-job-list" type="button">← 一覧へ戻る</button>
+      <div class="section-heading"><div><p class="step">03 / OUTPUT</p><h2>表示中の変換ジョブ</h2></div><span id="job-state" class="state-pill" aria-live="polite">待機中</span></div>
+      <div class="job-meta"><div><p id="job-view-name" class="job-view-name">ジョブを読み込んでいます</p><p id="job-id" class="job-id"><%= h @selected_job_id %></p></div><p id="job-settings-snapshot" class="fine-print"></p></div>
+      <div class="progress-track" role="progressbar" aria-label="変換進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-bar"></span></div>
+      <div class="job-copy"><strong id="job-percent">0%</strong><span id="job-message">変換を開始しています</span></div>
+      <div class="job-freshness"><span id="job-connection" role="status" aria-live="polite">状態を取得しています</span><span id="job-updated-at"></span><button id="retry-status-button" class="text-button" type="button" hidden>状態を再取得</button></div>
+      <div class="job-actions"><button id="cancel-button" class="secondary-button" type="button">停止</button><button id="load-job-settings" class="secondary-button" type="button" hidden>この設定を編集へ読み込む</button><button id="delete-button" class="danger-button" type="button" hidden>ジョブを削除</button></div>
+      <p id="delete-summary" class="fine-print" hidden></p>
+      <div id="job-detail-tabs" class="job-detail-tabs" role="tablist" aria-label="ジョブ詳細" hidden>
+        <button type="button" role="tab" aria-selected="true" aria-controls="job-preview-panel" data-job-tab="preview">プレビュー</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="job-artifacts-panel" data-job-tab="artifacts">成果物</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="job-settings-panel" data-job-tab="settings">設定・ログ</button>
+      </div>
+      <div id="result-layout" class="result-layout" hidden>
+        <section id="job-preview-panel" data-job-panel="preview" role="tabpanel">
+        <div id="result-tabs" class="result-tabs" role="tablist" aria-label="プレビュー種類"></div>
+        <div class="preview-toolbar" data-viewer="result-preview">
+          <button type="button" data-view-action="out" aria-label="縮小">−</button><output data-view-scale>全体</output>
+          <button type="button" data-view-action="in" aria-label="拡大">＋</button><button type="button" data-view-action="actual">100%</button><button type="button" data-view-action="reset">全体表示</button>
+          <button type="button" data-expand-viewer="result-preview">大きく比較</button>
+          <label>背景<select data-view-background><option value="checker">透明</option><option value="light">白</option><option value="gray">灰</option><option value="dark">暗色</option></select></label>
+        </div>
+        <div class="comparison-grid">
+          <figure id="corrected-input-figure"><figcaption>補正後入力</figcaption><div id="compare-source-preview" class="result-preview comparison-source preview-viewport" data-viewer-group="result-preview"><img id="compare-source-image" alt="変換時の入力プレビュー" draggable="false"></div></figure>
+          <figure><figcaption id="result-caption">CMYW</figcaption><div id="result-preview" class="result-preview preview-viewport" data-background="checker"><img id="result-image" alt="生成されたプレビュー" draggable="false"></div></figure>
+        </div>
+        <p id="corrected-input-unavailable" class="notice info" hidden>この旧ジョブには補正後入力が保存されていないため、生成結果だけを表示します。</p>
+        <p class="fine-print"><span data-view-hint="result-preview">拡大すると2画像を同じ倍率・位置で移動できます。</span></p>
+        <p id="result-legend" class="fine-print">材料マスクは白が0層、濃い部分ほどその材料の層数が多い領域です。</p>
+        </section>
+        <section id="job-artifacts-panel" data-job-panel="artifacts" role="tabpanel" hidden>
+        <section id="tile-results" class="tile-results" hidden>
+          <div class="section-heading compact-heading"><div><h3>分割モデル</h3><p class="fine-print">各プレビューは対応する3MFの範囲です。</p></div></div>
+          <div id="tile-result-list" class="tile-result-list"></div>
+        </section>
+        <div class="artifact-section"><div class="artifact-heading"><h3>成果物</h3><div><button id="download-models" class="secondary-button" type="button">全3MFをZIP</button><button id="download-all" class="secondary-button" type="button">全成果物をZIP</button></div></div><p id="bambu-open-status" class="artifact-status fine-print" role="status" aria-live="polite"></p><ul id="artifact-list" class="artifact-list"></ul></div>
+        </section>
+        <section id="job-settings-panel" data-job-panel="settings" role="tabpanel" hidden>
+          <h3>生成時の設定</h3>
+          <dl id="job-setting-details" class="job-setting-details"></dl>
+          <p class="fine-print">この設定を編集へ読み込むと、現在選択中の画像は維持されます。</p>
+          <a id="job-detail-log-link" class="text-button" href="#" target="_blank" rel="noopener" hidden>ローカルログを開く</a>
+        </section>
+      </div>
+      <div id="job-error" class="notice error" hidden><p id="job-error-message"></p><div class="recovery-actions"><button id="choose-another-image" class="text-button" type="button">画像を選び直す</button><button id="review-settings" class="text-button" type="button">設定を確認する</button><a id="job-log-link" class="text-button" href="#" target="_blank" rel="noopener" hidden>ログを確認する</a></div></div>
+    </section>
+
+    <aside class="panel history-panel">
+      <div class="section-heading compact-heading">
+        <div><p class="step">RECENT</p><h2>最近のジョブ</h2></div>
+      </div>
+      <div class="history-controls">
+        <label>検索<input id="history-query" type="search" placeholder="入力名・ジョブID"></label>
+        <label>状態<select id="history-filter"><option value="all">すべて</option><option value="active">実行中</option><option value="completed">完了</option><option value="failed">失敗・停止</option></select></label>
+        <label>開始日<input id="history-date-from" type="date"></label>
+        <label>終了日<input id="history-date-to" type="date"></label>
+        <label>並び順<select id="history-sort"><option value="created_desc">新しい順</option><option value="created_asc">古い順</option><option value="name_asc">入力名 A–Z</option><option value="name_desc">入力名 Z–A</option></select></label>
+      </div>
+      <div class="history-selection-actions">
+        <span id="history-selection-status" aria-live="polite">未選択</span>
+        <button id="compare-jobs" class="secondary-button" type="button" disabled>2件を比較</button>
+        <button id="delete-selected-jobs" class="danger-button" type="button" disabled>選択したジョブを削除</button>
+      </div>
+      <p id="history-empty" class="empty-copy" <%= "hidden" unless @jobs.empty? %>>まだジョブはありません。</p>
+      <ol id="job-list" class="job-list">
+        <% @jobs.each do |job| %>
+          <li data-state="<%= h job['state'] %>">
+            <a href="/?job=<%= h job['job_id'] %>"><strong><%= h(job['input_name'] || job['job_id']) %></strong><span><%= h job['job_id'] %></span><small><%= h job['state'] %> · <%= h job['percent'] %>%</small></a>
+            <% if Lithop::JobExecution::FINAL_STATES.include?(job['state']) %>
+              <button class="history-delete" type="button" data-job-id="<%= h job['job_id'] %>" data-file-count="<%= h job['file_count'] %>" data-size-bytes="<%= h job['size_bytes'] %>">削除</button>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+      <button id="load-more-jobs" class="secondary-button load-more" type="button">さらに表示</button>
+    </aside>
+    </div>
+    </section>
+
+    <section id="view-presets" class="app-view" data-app-view="presets" aria-labelledby="presets-view-title" <%= "hidden" unless @initial_view == "presets" %>>
+      <h1 id="presets-view-title" class="view-title" tabindex="-1">プリセット</h1>
+      <section id="settings-library-section" class="panel preset-panel">
+        <div class="section-heading">
+          <div><p class="step">REUSABLE SETTINGS</p><h2>プリセットと下書き</h2></div>
+          <button class="secondary-button" type="button" data-view-target="create">作成へ戻る</button>
+        </div>
+        <p class="preset-intro">現在の編集設定を保存・再利用します。入力画像、ジョブID、成果物パスは保存しません。</p>
+        <div class="settings-library">
+          <label>名前付きプリセット
+            <select id="preset-select"><option value="">プリセットを選択</option></select>
+          </label>
+          <label>プリセット名<input id="preset-name" type="text" maxlength="80" autocomplete="off" placeholder="例: 細線 0.2 mm"></label>
+          <div class="library-actions">
+            <button id="preset-save" class="secondary-button" type="button">現在設定を保存</button>
+            <button id="preset-load" class="text-button" type="button">編集へ読込</button>
+            <button id="preset-rename" class="text-button" type="button">名前変更</button>
+            <button id="preset-delete" class="text-button danger-text" type="button">削除</button>
+          </div>
+          <div class="library-actions draft-actions">
+            <button id="draft-save" class="secondary-button" type="button">下書き保存</button>
+            <button id="draft-restore" class="text-button" type="button">下書きを復元</button>
+            <button id="draft-delete" class="text-button danger-text" type="button">下書きを削除</button>
+          </div>
+          <p id="settings-library-status" class="fine-print" role="status" aria-live="polite">画像は保存しません。復元後に画像を選択してください。</p>
+        </div>
+      </section>
+    </section>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="preview-dialog" class="preview-dialog" aria-labelledby="preview-dialog-title">
+    <div class="dialog-heading"><div><p class="step">LARGE PREVIEW</p><h2 id="preview-dialog-title">プレビューを大きく表示</h2></div><button id="close-preview-dialog" class="secondary-button" type="button">閉じる</button></div>
+    <div class="preview-toolbar" data-viewer="dialog-preview">
+      <button type="button" data-view-action="out" aria-label="縮小">−</button><output data-view-scale>全体</output>
+      <button type="button" data-view-action="in" aria-label="拡大">＋</button><button type="button" data-view-action="actual">100%</button><button type="button" data-view-action="reset">全体表示</button>
+      <label>背景<select data-view-background><option value="checker">透明</option><option value="light">白</option><option value="gray">灰</option><option value="dark">暗色</option></select></label>
+    </div>
+    <div id="dialog-preview-grid" class="dialog-preview-grid">
+      <figure id="dialog-source-figure"><figcaption id="dialog-source-caption">入力</figcaption><div id="dialog-source-preview" class="result-preview preview-viewport" data-viewer-group="dialog-preview" data-background="checker"><img id="dialog-source-image" alt="拡大表示する入力" draggable="false"></div></figure>
+      <figure id="dialog-result-figure"><figcaption id="dialog-result-caption">生成結果</figcaption><div id="dialog-result-preview" class="result-preview preview-viewport" data-viewer-group="dialog-preview" data-background="checker"><img id="dialog-result-image" alt="拡大表示する生成結果" draggable="false"></div></figure>
+    </div>
+    <p id="dialog-legend" class="fine-print" hidden></p>
+    <p class="fine-print"><span data-view-hint="dialog-preview">拡大するとドラッグまたは矢印キーで移動できます。</span> Escでも閉じられます。</p>
+  </dialog>
+
+  <dialog id="job-compare-dialog" class="preview-dialog compare-dialog" aria-labelledby="job-compare-title">
+    <div class="dialog-heading"><div><p class="step">JOB COMPARISON</p><h2 id="job-compare-title">2つのジョブを比較</h2></div><button id="close-job-compare" class="secondary-button" type="button">閉じる</button></div>
+    <div class="preview-toolbar" data-viewer="job-compare-preview">
+      <button type="button" data-view-action="out" aria-label="縮小">−</button><output data-view-scale>全体</output>
+      <button type="button" data-view-action="in" aria-label="拡大">＋</button><button type="button" data-view-action="actual">100%</button><button type="button" data-view-action="reset">全体表示</button>
+      <label>画像<select id="job-compare-kind"></select></label>
+      <label>背景<select data-view-background><option value="checker">透明</option><option value="light">白</option><option value="gray">灰</option><option value="dark">暗色</option></select></label>
+    </div>
+    <p id="job-compare-status" class="notice info" role="status" hidden></p>
+    <div class="job-compare-grid">
+      <% %w[a b].each do |side| %>
+        <figure><figcaption><strong id="compare-<%= side %>-name"></strong><span id="compare-<%= side %>-meta"></span></figcaption><div id="compare-<%= side %>-preview" class="result-preview preview-viewport" data-viewer-group="job-compare-preview" data-background="checker"><img id="compare-<%= side %>-image" alt="比較する生成結果 <%= side.upcase %>" draggable="false"><p id="compare-<%= side %>-missing" hidden>この画像はありません</p></div><button id="compare-<%= side %>-use" class="text-button" type="button">この設定を編集へ読み込む</button></figure>
+      <% end %>
+    </div>
+    <section class="compare-settings"><h3>仕上がりに関係する設定差</h3><div class="table-scroll"><table><thead><tr><th>項目</th><th>A</th><th>B</th></tr></thead><tbody id="job-compare-differences"></tbody></table></div></section>
+    <p class="fine-print">画面上の比較は実測した透過色を保証しません。異なる寸法・縦横比はそれぞれの比率で表示します。</p>
+  </dialog>
+
+  <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-dialog-title">
+    <div class="dialog-heading"><div><p class="step">LOCAL HELP</p><h2 id="help-dialog-title">画面の使い方</h2></div><button id="close-help-dialog" class="secondary-button" type="button">閉じる</button></div>
+    <ol>
+      <li><strong>作成</strong><span>画像を選び、設定と入力プレビューを確認して変換します。</span></li>
+      <li><strong>ジョブ</strong><span>進捗、生成結果、分割成果物、ログを確認します。</span></li>
+      <li><strong>プリセット</strong><span>現在の編集設定を名前付きで保存し、後から再利用します。</span></li>
+    </ol>
+    <p class="fine-print">処理中は上部のジョブ表示から進捗確認と停止ができます。画像と成果物は外部サービスへ送信されません。</p>
+  </dialog>
+</body>
+</html>

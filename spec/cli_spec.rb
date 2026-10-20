@@ -62,6 +62,27 @@ RSpec.describe Lithop::CLI do
     expect(error).to start_with("Usage: lithop IMAGE [options]")
   end
 
+  it "reports the active native acceleration backend" do
+    status, output, error = run_cli(["doctor"], cwd: Dir.pwd)
+    diagnostics = JSON.parse(output)
+
+    expect(status).to eq(0)
+    expect(error).to be_empty
+    expect(diagnostics).to include(
+      "backend" => "rust", "available" => true, "enabled" => true,
+      "extension_version" => Lithop::VERSION, "lithop_version" => Lithop::VERSION
+    )
+    expect(diagnostics.fetch("ruby")).to include("ruby")
+    expect(diagnostics.fetch("platform")).not_to be_empty
+  end
+
+  it "rejects an invalid local UI port before starting the server" do
+    status, _output, error = run_cli(["ui", "--port", "0"], cwd: Dir.pwd)
+
+    expect(status).to eq(1)
+    expect(error).to include("port must be from 1 to 65535")
+  end
+
   it "shows current defaults and excludes retired generation option names" do
     out = StringIO.new
 

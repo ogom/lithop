@@ -25,7 +25,7 @@ RSpec.describe "export artifact contract" do
   end
   let(:three_mf_digests) do
     {
-      "3D/3dmodel.model" => "cab601db289b7a2293ac7aef59d066358acfaa7d3f463b11320f70378c9f2f9f",
+      "3D/3dmodel.model" => "0dae843bbab4af1e1052e58b274653e0252c8f4390a7874533069dafdf821ea8",
       "Metadata/layer_config_ranges.xml" => "a95116fadd7522bf5d6d744d3fad15b7014fb28c0553e364cc2b673f5903e42a",
       "Metadata/model_settings.config" => "a7708caa8f6338c088b6cc50211499c94cc37ca5b7e2fdae6b1297187cee8572",
       "Metadata/project_settings.config" => "9f974735b67357579d32abfe31afc5254e70b9eaf999167c0caea7eb883e3e21",
@@ -57,10 +57,14 @@ RSpec.describe "export artifact contract" do
         expect([preview.width, preview.height]).to eq([4, 4]), name
         expect(Digest::SHA256.hexdigest(preview.write_to_memory)).to eq(digest), name
       end
+      corrected = Vips::Image.new_from_file(File.join(result.path, "corrected-input.png"))
+      expect([corrected.width, corrected.height]).to eq([5, 5])
+      expect(Digest::SHA256.hexdigest(corrected.write_to_memory))
+        .to eq("30112800eb0c764234fbe90adec3456023df308fb0f231ba3add7ceb8fff19aa")
       expect(normalized_json_digest(result.path, "settings.json", "input_path"))
-        .to eq("2539f0013ef6011af88fad7d53e5f79a507235bc29e8391242515067677ee1f7")
+        .to eq("361f1cbb8c0d6ecbcdeb0cee0e2645e1ffba0605f36d9785c52c08a7c3bb02af")
       expect(normalized_json_digest(result.path, "manifest.json", "job_id"))
-        .to eq("3641ad731c3eb868077975276a2f4deeda96580e753dbe2196a7d2cc2dcf345b")
+        .to eq("b055151349d8d8bfc869ddaf30eb3715aedd7e251f0c0944f35bcfa6ddc4b15d")
       expect(archive_digests(result.path)).to eq(three_mf_digests)
     end
   end

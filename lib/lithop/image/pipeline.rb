@@ -9,7 +9,9 @@ module Lithop
     REFERENCE_DARK_MAXIMUM_VALUE = 0.75
     REFERENCE_NEUTRAL_MAXIMUM_CHROMA = 0.25
     REFERENCE_BROWN_LINE_CMY_COVERAGE = 1.0 / 7
-    Result = Data.define(:width, :height, :cmys, :cmy_densities, :white_densities, :color_cells)
+    Result = Data.define(
+      :width, :height, :cmys, :cmy_densities, :white_densities, :color_cells, :corrected_preview_png
+    )
 
     def initialize(settings)
       @settings = settings
@@ -21,13 +23,8 @@ module Lithop
       require "vips"
 
       access = @settings.color_pixel_size ? :random : :sequential
-      image = load_image(path, access:)
-      image = image.autorot
-      validate_input!(image)
-      image = image.flatten(background: [255, 255, 255]) if image.has_alpha?
-      image = to_srgb(image)
-      image = adjust_image(image)
-      sampled = @placement.call(image, @settings.sampling_grid).cast(:uchar)
+      image = normalized_image(path, access:)
+      sampled = @placement.call(image, @settings.sampling_grid).cast(:uchar).copy_memory
 
       rgbs = rgb_components(sampled)
       color_samples = rgbs.map { |rgb| color_sample(rgb) }
@@ -42,20 +39,62 @@ module Lithop
         cmys: color_samples.map(&:first),
         cmy_densities: color_samples.map(&:last),
         white_densities: rgbs.map { |rgb| white_density(rgb) },
-        color_cells: result_color_cells
+        color_cells: result_color_cells,
+        corrected_preview_png: sampled.write_to_buffer(".png")
       )
+    rescue SystemCallError, Vips::Error => e
+      raise InputError, "could not read image: #{e.message}"
+    end
+
+    # Returns the same normalized and placed image used by conversion, bounded
+    # to a browser-friendly sampling grid and without running CMYW or mesh work.
+    def preview_png(path, maximum_width: 960, maximum_height: 720)
+      require "vips"
+
+      grid = preview_grid(maximum_width:, maximum_height:)
+      image = normalized_image(path, access: :sequential, sampling_grids: [grid])
+      @placement.call(image, grid).cast(:uchar).write_to_buffer(".png")
     rescue SystemCallError, Vips::Error => e
       raise InputError, "could not read image: #{e.message}"
     end
 
     private
 
-    def load_image(path, access:)
+    def normalized_image(path, access:, sampling_grids: nil)
+      image = load_image(path, access:, sampling_grids:)
+      image = image.autorot
+      validate_input!(image)
+      image = image.flatten(background: [255, 255, 255]) if image.has_alpha?
+      adjust_image(to_srgb(image))
+    end
+
+    def load_image(path, access:, sampling_grids: nil)
       signature = File.binread(path, 8)
       raster = signature.start_with?("\xFF\xD8\xFF".b) || signature.start_with?("\x89PNG\r\n\x1A\n".b)
       return Vips::Image.new_from_file(path.to_s, access:) if raster
 
-      @svg_loader.call(path, access:)
+      @svg_loader.call(path, access:, sampling_grids:)
+    end
+
+    def preview_grid(maximum_width:, maximum_height:)
+      maximum_width = Integer(maximum_width)
+      maximum_height = Integer(maximum_height)
+      raise InputError, "preview dimensions must be at least 2 pixels" if maximum_width < 2 || maximum_height < 2
+
+      pixel_size = [
+        @settings.width.fdiv(maximum_width - 1),
+        @settings.height.fdiv(maximum_height - 1),
+        0.01
+      ].max
+      SamplingGrid.new(
+        width: @settings.width, height: @settings.height, pixel_size:,
+        margins: {
+          top: @settings.margin_top, right: @settings.margin_right,
+          bottom: @settings.margin_bottom, left: @settings.margin_left
+        }
+      )
+    rescue ArgumentError, TypeError
+      raise InputError, "preview dimensions must be integers"
     end
 
     def validate_input!(image)

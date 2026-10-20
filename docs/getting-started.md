@@ -4,8 +4,9 @@ Lithopは、画像からカラーLithophane（リトファン）の3MFとWhite�
 
 ## 準備
 
-- macOS
+- macOS（CIはmacOS／Ruby 4.0、現在の実測環境はApple silicon）
 - Ruby 4.0以上
+- CMYWレシピ選択用ネイティブ拡張をビルドするRust
 - JPEG、PNG、SVG（librsvg）、ICCプロファイルを扱えるlibvips
 - 印刷する場合はBambu Studio、AMS対応プリンタ、必要なCMYWフィラメント
 
@@ -13,15 +14,17 @@ Lithopは、画像からカラーLithophane（リトファン）の3MFとWhite�
 
 ## インストール
 
-公開版0.2.0を使う場合は、libvipsとバージョンを指定したLithopをインストールします。
+0.3.0を使う場合は、libvips、Rust、バージョンを指定したLithopをインストールします。
 
 ```sh
-brew install vips
-gem install lithop -v 0.2.0
+brew install vips rust
+gem install lithop -v 0.3.0
 lithop --version
+lithop doctor
 ```
 
-`lithop --version`が`0.2.0`を表示することを確認します。
+`lithop --version`が`0.3.0`を表示することを確認します。
+`lithop doctor`では`backend`が`rust`、`extension_version`がLithopと同じバージョンであることを確認します。
 
 ソースチェックアウトから実行する場合は、代わりに次を実行します。
 

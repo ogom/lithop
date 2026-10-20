@@ -174,6 +174,8 @@ module Lithop
       roots.freeze
     end.freeze
 
+    attr_reader :group_ids, :group_count
+
     def initialize(model:, intervals:)
       @model = model
       @intervals = intervals

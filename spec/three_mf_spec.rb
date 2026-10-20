@@ -79,7 +79,7 @@ RSpec.describe Lithop::ThreeMF do
       .to raise_error(Lithop::InputError, /build_z_offset must be a finite number/)
   end
 
-  it "rejects a triangle enumerable that cannot be replayed for writing" do
+  it "accepts a one-shot triangle enumerable through the Rust indexer" do
     triangles = Object.new
     source = geometry
     used = false
@@ -94,9 +94,34 @@ RSpec.describe Lithop::ThreeMF do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "one-shot.3mf")
 
+      result = described_class.write(path, parts:)
+
+      expect(result.triangle_count).to eq(12)
+      expect(File).to exist(path)
+    end
+  end
+
+  it "keeps the repeatable-input check in the Ruby comparison path" do
+    triangles = Object.new
+    source = geometry
+    used = false
+    triangles.define_singleton_method(:each) do |&block|
+      return if used
+
+      used = true
+      source.each_triangle.each(&block)
+    end
+    parts = [described_class::Part.new(material: :white, triangles:)]
+
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "one-shot-ruby.3mf")
+      previous = ENV.fetch("LITHOP_DISABLE_NATIVE", nil)
+      ENV["LITHOP_DISABLE_NATIVE"] = "1"
       expect { described_class.write(path, parts:) }
         .to raise_error(Lithop::InputError, /must be repeatable/)
       expect(File).not_to exist(path)
+    ensure
+      ENV["LITHOP_DISABLE_NATIVE"] = previous
     end
   end
 

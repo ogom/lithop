@@ -1,0 +1,6 @@
+[workspace]
+members = ["ext/lithop_native"]
+resolver = "2"
+
+[profile.release]
+debug = true

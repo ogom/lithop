@@ -2,9 +2,11 @@
 
 require "optparse"
 require "fileutils"
+require "json"
 
 module Lithop
   # Command-line interface for generating and cleaning lithophane projects.
+  # rubocop:disable-next Metrics/ClassLength
   class CLI
     include CLICalibration
 
@@ -18,9 +20,12 @@ module Lithop
       @cwd = File.expand_path(cwd)
     end
 
+    # rubocop:disable-next Metrics/AbcSize
     def run(argv)
       return clean(argv.drop(1)) if argv.first == "clean"
       return calibrate(argv.drop(1)) if argv.first == "calibrate"
+      return web_ui(argv.drop(1)) if argv.first == "ui"
+      return diagnostics(argv.drop(1)) if argv.first == "doctor"
 
       options = {}
       parser = CLIOptions.generation(options, @out)
@@ -57,6 +62,13 @@ module Lithop
     end
 
     private
+
+    def diagnostics(arguments)
+      raise InputError, "doctor does not accept arguments" unless arguments.empty?
+
+      @out.puts JSON.pretty_generate(Native.diagnostics)
+      0
+    end
 
     def report_estimate(estimate)
       @out.puts(
@@ -105,5 +117,21 @@ module Lithop
     end
 
     def report_missing_build(build_dir) = 0.tap { @out.puts "No build directory: #{build_dir}" }
+
+    def web_ui(argv)
+      options = {}
+      parser = CLIOptions.ui(options, @out)
+      arguments = parser.parse(argv)
+      raise OptionParser::InvalidArgument, arguments.join(" ") unless arguments.empty?
+
+      project_dir = File.expand_path(options.fetch(:project_dir, @cwd), @cwd)
+      port = options.fetch(:port, 4567)
+      raise OptionParser::InvalidArgument, "port must be from 1 to 65535" unless port.between?(1, 65_535)
+
+      require_relative "web/server"
+      @out.puts "Lithop Local UI: http://127.0.0.1:#{port}"
+      Web::Server.run(project_dir:, port:)
+      0
+    end
   end
 end

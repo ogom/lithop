@@ -28,7 +28,8 @@ RSpec.describe Lithop::Export do
       expect(File).to exist(File.join(result.path, "lithop.3mf"))
       expect(File).to exist(File.join(result.path, "manifest.json"))
       preview_files = %w[
-        preview.png transmission.png thickness.png cyan-mask.png magenta-mask.png yellow-mask.png white-mask.png
+        corrected-input.png preview.png transmission.png thickness.png
+        cyan-mask.png magenta-mask.png yellow-mask.png white-mask.png
       ]
       expect(preview_files).to all(satisfy { |name| File.exist?(File.join(result.path, name)) })
       manifest = JSON.parse(File.read(File.join(result.path, "manifest.json")))
@@ -54,8 +55,8 @@ RSpec.describe Lithop::Export do
         "calibration_profile_id" => nil
       )
       expect(manifest.fetch("files")).to include(
-        "preview.png", "transmission.png", "thickness.png", "cyan-mask.png", "magenta-mask.png",
-        "yellow-mask.png", "white-mask.png"
+        "corrected-input.png", "preview.png", "transmission.png", "thickness.png", "cyan-mask.png",
+        "magenta-mask.png", "yellow-mask.png", "white-mask.png"
       )
       settings_json = JSON.parse(File.read(File.join(result.path, "settings.json")))
       expect(settings_json.fetch("nozzle_diameter")).to eq(0.4)
@@ -125,12 +126,18 @@ RSpec.describe Lithop::Export do
 
       result = described_class.new(settings:, project_dir: directory, clock:, random:).call(input)
       tile_files = result.files.grep(%r{\Atiles/.+\.3mf\z})
+      tile_previews = result.files.grep(%r{\Atiles/.+-preview\.png\z})
       manifest = JSON.parse(File.read(File.join(result.path, "manifest.json")))
 
       expect(tile_files).to eq(%w[
                                  tiles/tile_r01_c01.3mf tiles/tile_r01_c02.3mf tiles/tile_r01_c03.3mf
                                  tiles/tile_r02_c01.3mf tiles/tile_r02_c02.3mf tiles/tile_r02_c03.3mf
                                ])
+      expect(tile_previews).to eq(%w[
+                                    tiles/tile_r01_c01-preview.png tiles/tile_r01_c02-preview.png
+                                    tiles/tile_r01_c03-preview.png tiles/tile_r02_c01-preview.png
+                                    tiles/tile_r02_c02-preview.png tiles/tile_r02_c03-preview.png
+                                  ])
       expect(result.files).to include("tile-layout.svg")
       expect(result.files).not_to include("lithop.3mf")
       expect(File.read(File.join(result.path, "tile-layout.svg"))).to include("2.0 × 2.0 mm")
@@ -140,14 +147,20 @@ RSpec.describe Lithop::Export do
       )
       expect(manifest.fetch("tiles").first).to include(
         "id" => "tile_r01_c01",
+        "preview_file" => "tiles/tile_r01_c01-preview.png",
         "offset_mm" => { "x" => 0.0, "y" => 2.0 },
         "bounds_mm" => { "x_min" => 0.0, "x_max" => 2.0, "y_min" => 2.0, "y_max" => 4.0 }
       )
       expect(manifest.fetch("tiles").last).to include(
         "id" => "tile_r02_c03",
+        "preview_file" => "tiles/tile_r02_c03-preview.png",
         "offset_mm" => { "x" => 4.0, "y" => 0.0 },
         "bounds_mm" => { "x_min" => 4.0, "x_max" => 6.0, "y_min" => 0.0, "y_max" => 2.0 }
       )
+      tile_previews.each do |name|
+        image = Vips::Image.new_from_file(File.join(result.path, name))
+        expect([image.width, image.height]).to eq([2, 2])
+      end
       tile_files.each do |name|
         report = Lithop::ReferenceThreeMF.new(File.join(result.path, name)).call
         part_names = report.fetch(:parts).map { |part| part.fetch(:name) }

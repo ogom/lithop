@@ -141,14 +141,14 @@ module Lithop
       @validator = SVGDocumentValidator.new
     end
 
-    def call(path, access:)
+    def call(path, access:, sampling_grids: nil)
       data = read(path)
       @validator.call(data)
       ensure_loader!
 
       probe = render(data, scale: 1.0, access: :sequential)
       validate_rendered_image!(probe, pixels: false)
-      scale = render_scale(probe)
+      scale = render_scale(probe, sampling_grids || default_sampling_grids)
       validate_planned_pixels!(probe, scale)
 
       image = render(data, scale:, access:)
@@ -180,8 +180,8 @@ module Lithop
       raise InputError, "could not render SVG: #{e.message}"
     end
 
-    def render_scale(image)
-      scales = sampling_grids.map do |grid|
+    def render_scale(image, grids)
+      scales = grids.map do |grid|
         width, height = grid.content_sample_size
         ratios = [width.fdiv(image.width), height.fdiv(image.height)]
         @settings.image_fit == "contain" ? ratios.min * @settings.crop_scale : ratios.max / @settings.crop_scale
@@ -189,7 +189,7 @@ module Lithop
       [*scales, 1.0 / image.width, 1.0 / image.height].max
     end
 
-    def sampling_grids
+    def default_sampling_grids
       grids = [@settings.sampling_grid]
       grids << @settings.color_sampling_grid if @settings.color_pixel_size
       grids

@@ -85,6 +85,92 @@ RSpec.describe Lithop::JobExecution do
     end
   end
 
+  it "keeps a published result completed when cancellation arrives after the commit point" do
+    Dir.mktmpdir do |project_dir|
+      execution = described_class.new(project_dir:, job_id: "job-published")
+      output_path = File.join(project_dir, "build", "job-published")
+
+      execution.call do |job|
+        FileUtils.mkdir_p(output_path)
+        File.write(File.join(output_path, "preview.png"), "published")
+        job.publication_committed!
+        described_class.request_cancel(project_dir:, job_id: job.job_id)
+        result_class.new(path: output_path, files: ["preview.png"])
+      end
+
+      expect(read_status(execution)).to include(
+        "state" => "completed", "output_path" => output_path, "files" => ["preview.png"]
+      )
+    end
+  end
+
+  it "serializes cancellation against the publication checkpoint" do
+    Dir.mktmpdir do |project_dir|
+      execution = described_class.new(project_dir:, job_id: "job-boundary")
+      checkpoint = Queue.new
+      publish = Queue.new
+      cancel_started = Queue.new
+      output_path = File.join(project_dir, "build", "job-boundary")
+      execution_thread = Thread.new do
+        execution.call do |job|
+          job.checkpoint!
+          checkpoint << true
+          publish.pop
+          FileUtils.mkdir_p(output_path)
+          job.publication_committed!
+          result_class.new(path: output_path, files: [])
+        end
+      end
+      checkpoint.pop
+      cancel_thread = Thread.new do
+        cancel_started << true
+        described_class.request_cancel(project_dir:, job_id: "job-boundary")
+      end
+      cancel_started.pop
+      sleep 0.02
+
+      expect(cancel_thread).to be_alive
+      expect(File).not_to exist(File.join(project_dir, "build", ".jobs", "job-boundary.cancel"))
+      publish << true
+      execution_thread.value
+      cancel_thread.join
+      expect(read_status(execution)).to include("state" => "completed")
+      expect(File).not_to exist(File.join(project_dir, "build", ".jobs", "job-boundary.cancel"))
+    end
+  end
+
+  it "reconciles an externally stopped active process to its persisted output" do
+    Dir.mktmpdir do |project_dir|
+      jobs = File.join(project_dir, "build", ".jobs")
+      output = File.join(project_dir, "build", "job-exited")
+      FileUtils.mkdir_p([jobs, output])
+      File.write(File.join(output, "preview.png"), "preview")
+      File.write(
+        File.join(jobs, "job-exited.json"),
+        JSON.generate(job_id: "job-exited", state: "cancelling", phase: "cancelling", percent: 95)
+      )
+
+      record = described_class.finalize_process_exit(project_dir:, job_id: "job-exited")
+
+      expect(record).to include(
+        "state" => "completed", "output_path" => output, "files" => ["preview.png"]
+      )
+    end
+  end
+
+  it "records cancellation when a child exits before creating its first status" do
+    Dir.mktmpdir do |project_dir|
+      described_class.request_cancel(project_dir:, job_id: "job-early")
+
+      record = described_class.finalize_process_exit(project_dir:, job_id: "job-early")
+
+      expect(record).to include("state" => "cancelled", "phase" => "cancelled", "percent" => 0)
+      expect(JSON.parse(File.read(File.join(project_dir, "build", ".jobs", "job-early.json"))))
+        .to include("state" => "cancelled")
+      expect(File).not_to exist(File.join(project_dir, "build", ".jobs", "job-early.cancel"))
+    end
+  end
+
   it "recovers stale owned data and changes its active state to failed" do
     Dir.mktmpdir do |project_dir|
       build_dir = File.join(project_dir, "build")

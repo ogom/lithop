@@ -10,7 +10,11 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 
 状態は`build/.jobs/<job_id>.json`へ原子的に保存します。`state`は`queued`、`running`、中止要求を受けた`cancelling`、終了状態の`completed`／`failed`／`cancelled`です。`phase`、0〜100の`percent`、メッセージ、開始・更新・終了日時を持ち、完了時だけ`output_path`と`files`を記録します。CLIにも主要工程の進捗を表示します。
 
-`Ctrl-C`などの割り込みと`JobExecution.request_cancel`による中止要求は`cancelled`として記録し、未完成ジョブを公開しません。失敗はエラーのクラスとメッセージを`failed`状態へ記録します。どちらも実行自身が作成した一時領域を回収し、入力画像、別の実行の所有情報がない一時領域、使用中の一時領域、完了済みジョブを削除しません。プロセスが強制終了して回収できなかった所有情報付き一時領域は、所有PIDの終了を確認したうえで次の変換開始時に削除し、残っていた実行状態を`failed`の`recovered`工程へ変更します。
+`Ctrl-C`などの割り込みと`JobExecution.request_cancel`による中止要求は`cancelled`として記録し、未完成ジョブを公開しません。成果物の原子的な公開が確定した後に中止要求が届いた場合は、出力との整合を保つため`completed`として記録します。失敗はエラーのクラスとメッセージを`failed`状態へ記録します。どちらも実行自身が作成した一時領域を回収し、入力画像、別の実行の所有情報がない一時領域、使用中の一時領域、完了済みジョブを削除しません。プロセスが強制終了して回収できなかった所有情報付き一時領域は、所有PIDの終了を確認したうえで次の変換開始時に削除し、残っていた実行状態を`failed`の`recovered`工程へ変更します。
+
+ローカルUIでは終了状態のジョブを個別または複数選択で削除できます。対象は`build/<job_id>/`、`build/.jobs/<job_id>.json`、同名のログと中止要求、終了済みの`build/.web/<job_id>/`だけです。実行中のジョブ、シンボリックリンク、状態に記録された出力先がジョブIDと一致しないものは削除を拒否します。
+
+ローカルUIの「全3MFをZIP」と「全成果物をZIP」は、状態JSONの`files`に成果物として記録されたファイルだけを元の相対パスで格納します。対象一覧と容量の確認まではZIPを生成しません。生成した`build/.downloads/*.zip`は応答終了時に削除し、異常終了で残った場合は次のUI起動時に回収します。
 
 ## 通常ジョブのファイル
 
@@ -18,6 +22,7 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 | --- | --- |
 | `lithop.3mf` | 使用するCyan、Magenta、Yellow、Whiteの材料別メッシュを持つカラー用モデル |
 | `cmyk_white.stl` | 厚さマップから作るWhite単色の参照リトファン |
+| `corrected-input.png` | 配置、クロップ、色調整、White余白を適用し、変換時の格子でサンプリングしたRGB入力 |
 | `preview.png` | 公称レシピ色に相対的な厚さの明暗を重ねた確認用画像 |
 | `transmission.png` | White厚さによる相対透過明度 |
 | `thickness.png` | セル単位の厚さマップ |
@@ -33,6 +38,8 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 標準ジョブは単一プレートと非一様レイヤー情報を持つ`lithop.3mf`を出力します。未使用のCyan、Magenta、Yellowは3MFのメッシュから省略されるため、材料部品は1〜4個です。Whiteは必ず含まれます。`cmyk_white.stl`は比較用で、CMYWの材料分離情報を持ちません。
 
 XYタイルとZ分割のファイル構成、座標、`tile-layout.svg`、マニフェスト記録、4プレート構成は[3MFタイル分割とZ分割](tiling.md)を参照してください。
+
+XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-preview.png`を追加します。画像の1画素はそのタイルの1セルで、分割3MFと同じ範囲を表します。`manifest.json`の各`tiles`要素は`file`と`preview_file`で対応を記録します。
 
 ## プレビューの座標と値
 
@@ -100,7 +107,7 @@ XYタイルとZ分割のファイル構成、座標、`tile-layout.svg`、マニ
   "pixel_size_x": 0.21978021978021978,
   "pixel_size_y": 0.21987315010570824,
   "schema_version": 1,
-  "generator_version": "0.2.0",
+  "generator_version": "0.3.0",
   "input_path": "/absolute/path/to/image.png",
   "input_settings_path": "/absolute/path/to/config/settings.json",
   "calibration_profile_id": null,

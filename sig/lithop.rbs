@@ -1,6 +1,30 @@
 module Lithop
   VERSION: String
 
+  module Native
+    class MeshBuilder
+      def self.new: () -> MeshBuilder
+      def add_batch: (Array[Float] coordinates, Array[Integer] topology_keys) -> Integer
+      def vertex_count: () -> Integer
+      def triangle_count: () -> Integer
+      def center: () -> Array[Float]
+      def vertex_xml: (Integer offset, Integer count, Array[Float] origin) -> String
+      def triangle_xml: (Integer offset, Integer count) -> String
+      def memory_bytes: () -> Integer
+    end
+
+    def self.available?: () -> bool
+    def self.enabled?: () -> bool
+    def self.backend: () -> (:rust | :ruby)
+    def self.extension_version: () -> String
+    def self.loaded_extension_version: () -> String?
+    def self.diagnostics: () -> Hash[Symbol, untyped]
+    def self.palette_indices: (Array[Float] cmys, Array[Float] coverages) -> Array[Integer]
+    def self.vertex_xml: (Array[Float] vertices, Array[Float] origin) -> String
+    def self.triangle_xml: (Array[Integer] indices) -> String
+    def self.column_mesh: (Integer columns, Integer rows, Array[Float] x_boundaries, Array[Float] y_boundaries, Array[Float] z_boundaries, Array[Integer] intervals, Array[Integer] group_ids, Integer group_count) -> MeshBuilder
+  end
+
   class Error < StandardError
   end
 
@@ -121,6 +145,7 @@ module Lithop
 
     def initialize: (?layer_count: Integer, ?pigment_order: Array[Symbol]) -> void
     def nearest: (Array[Numeric] cmy) -> Recipe
+    def nearest_many: (Array[Array[Numeric]] cmys) -> Array[Recipe]
     def display_color: (Recipe recipe) -> String
   end
 

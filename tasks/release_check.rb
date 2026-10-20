@@ -10,10 +10,18 @@ require_relative "../lib/lithop/version"
 
 module Lithop
   # Runs the checks required before publishing a Lithop gem release.
+  # rubocop:disable-next Metrics/ModuleLength
   module ReleaseCheck
     EXPECTED_FILES = (
       %w[
         CHANGELOG.md
+        Cargo.lock
+        Cargo.toml
+        docs/images/cmyw-lithophane-preview.png
+        ext/lithop_native/Cargo.toml
+        ext/lithop_native/build.rs
+        ext/lithop_native/extconf.rb
+        ext/lithop_native/src/lib.rs
         LICENSE
         README.md
         RELEASING.md
@@ -28,8 +36,15 @@ module Lithop
         lib/lithop/image/placement.rb
         lib/lithop/job_directory.rb
         lib/lithop/layer_structure.rb
+        lib/lithop/native.rb
         lib/lithop/sampling_grid.rb
         lib/lithop/version.rb
+        lib/lithop/web/app.rb
+        lib/lithop/web/public/app.css
+        lib/lithop/web/public/app.js
+        lib/lithop/web/server.rb
+        lib/lithop/web/settings_library.rb
+        lib/lithop/web/views/index.erb
         sig/lithop.rbs
       ] + Dir["docs/*.md"]
     ).freeze
@@ -75,13 +90,14 @@ module Lithop
     end
 
     def validate_metadata(specification)
+      abort "built gem license is not MIT" unless specification.license == "MIT"
       abort "built gem does not require MFA" unless specification.metadata["rubygems_mfa_required"] == "true"
       abort "built gem has no changelog URI" unless specification.metadata["changelog_uri"]
       abort "built gem does not expose the lithop executable" unless specification.executables.include?("lithop")
     end
 
     def validate_dependencies(specification)
-      %w[ruby-vips rubyzip].each do |name|
+      %w[puma rackup rb_sys ruby-vips rubyzip sinatra].each do |name|
         dependency = specification.runtime_dependencies.find { |candidate| candidate.name == name }
         abort "built gem does not depend on #{name}" unless dependency
       end
@@ -97,6 +113,8 @@ module Lithop
 
         install_gem(environment, gem_home, bin_dir, gem_file)
         run_cli(environment, bin_dir)
+        run_native_extension(environment)
+        run_ui(environment, directory)
       end
     end
 
@@ -111,6 +129,23 @@ module Lithop
     def run_cli(environment, bin_dir)
       stdout = run!(environment, [File.join(bin_dir, "lithop"), "--version"], "installed CLI")
       abort "installed CLI reported #{stdout.strip.inspect}" unless stdout.strip == Lithop::VERSION
+    end
+
+    def run_native_extension(environment)
+      code = 'require "lithop"; abort "Rust extension unavailable" unless Lithop::Native.available?'
+      run!(environment, [RbConfig.ruby, "-e", code], "installed Rust extension")
+    end
+
+    def run_ui(environment, project_dir)
+      code = <<~RUBY
+        require "lithop"
+        require "lithop/web/app"
+        app = Lithop::Web::App.configured(project_dir: ENV.fetch("LITHOP_SMOKE_PROJECT"), csrf_token: "smoke")
+        response = Rack::MockRequest.new(app).get("/", "HTTP_HOST" => "127.0.0.1")
+        abort "installed UI did not render bundled assets" unless response.status == 200 && response.body.include?("/app.css")
+      RUBY
+      ui_environment = environment.merge("LITHOP_SMOKE_PROJECT" => project_dir)
+      run!(ui_environment, [RbConfig.ruby, "-e", code], "installed local UI")
     end
 
     def run!(environment, command, description)

@@ -49,13 +49,20 @@ module Lithop
       @layer_count = layer_count
       @pigment_order = pigment_order.dup.freeze
       @recipes = build_recipes.freeze
+      @native_coverages = recipes.flat_map(&:coverage_cmy).freeze
     end
 
     def nearest(cmy)
       validate_cmy!(cmy)
-      recipes.min_by do |recipe|
-        recipe.coverage_cmy.zip(cmy).sum { |coverage, target| (coverage - target)**2 }
-      end
+      nearest_validated(cmy)
+    end
+
+    def nearest_many(cmys)
+      cmys.each { |cmy| validate_cmy!(cmy) }
+      return cmys.map { |cmy| nearest_validated(cmy) } unless Native.enabled?
+
+      indices = Native.palette_indices(cmys.flatten, @native_coverages)
+      indices.map { |index| recipes.fetch(index) }
     end
 
     def display_color(recipe)
@@ -96,6 +103,17 @@ module Lithop
                 cmy.all? { |value| value.is_a?(Numeric) && value.finite? && value.between?(0.0, 1.0) }
 
       raise InputError, "CMY must contain three values between 0 and 1"
+    end
+
+    def squared_distance(coverage, target)
+      cyan = coverage[0] - target[0]
+      magenta = coverage[1] - target[1]
+      yellow = coverage[2] - target[2]
+      (cyan * cyan) + (magenta * magenta) + (yellow * yellow)
+    end
+
+    def nearest_validated(cmy)
+      recipes.min_by { |recipe| squared_distance(recipe.coverage_cmy, cmy) }
     end
   end
 end

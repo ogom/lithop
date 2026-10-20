@@ -14,6 +14,9 @@
 /spec/reports/
 /tmp/
 /.rspec_status
+/node_modules/
+/target/
+/lib/lithop_native/*.bundle
 
 # Packaged gems
 /pkg/
@@ -24,6 +27,7 @@
 
 # Local settings
 /config/settings.json
+/config/ui-settings.json
 
 # Local Bambu Studio result
 /result.json

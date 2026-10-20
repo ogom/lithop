@@ -1,6 +1,6 @@
 # Lithopドキュメント
 
-Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトファン）3MFと、White参照STLを生成するローカルCLIです。画像を外部へ送信せず、入力画像自体を生成ジョブへコピーしません。
+Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトファン）3MFと、White参照STLを生成するローカルCLI／ブラウザUIです。画像を外部へ送信せず、入力画像自体を生成ジョブへコピーしません。
 
 ## 安全と現在の検証範囲
 
@@ -14,6 +14,7 @@ Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトフ�
 ## 初めて使う
 
 - [導入と基本操作](getting-started.md) — インストール、小型モデルの生成、最初に見る成果物
+- [ローカルブラウザUI](local-ui.md) — 画像選択、設定、プレビュー、進捗・中止、成果物表示
 
 ## 印刷・校正する
 
@@ -37,6 +38,7 @@ CLIの現在の構文は、次のコマンドでも確認できます。
 ```sh
 lithop --help
 lithop calibrate --help
+lithop ui --help
 lithop clean --help
 ```
 
