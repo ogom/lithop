@@ -1,6 +1,6 @@
 # Bambu Studioでの確認と印刷
 
-標準の`lithop.3mf`は、単一`lithophane`プレート、CMYW割り当て、上部Whiteのレイヤー範囲を持ちます。単一プレートとWhite/Cyan/Magenta/Yellow割り当ての復元はBambu Studioで確認済みです。G-code、温度、速度、AMS実スロット、機種固有の開始・終了コードを含まないため、その他の印刷条件はBambu Studio側で確認します。
+標準の`lithop.3mf`は、単一`lithophane`プレート、CMYW割り当て、上部Whiteのレイヤー範囲を持ちます。単一プレートとWhite/Cyan/Magenta/Yellow割り当ての復元に加え、分割なし・分割ありの3MFが正常に開くことをBambu Studioで確認済みです。G-code、温度、速度、AMS実スロット、機種固有の開始・終了コードを含まないため、その他の印刷条件はBambu Studio側で確認します。
 
 標準構造は0.2 mmノズル、White下地2層、7層の`Cyan -> Magenta -> Yellow -> White`、連続高のWhite上面を使います。以下の確認をすべて終えるまで印刷を開始しないでください。
 
@@ -27,6 +27,10 @@ bundle exec lithop examples/cmy-fine-line.svg --width 20 --height 15 --pixel-siz
 タイルまたはZ分割ジョブを開く場合は、[3MFタイル分割とZ分割](tiling.md)に従い、対象3MF、組み立て座標、4プレート、材料割り当てを確認します。
 
 ## 3MFを読み込む
+
+macOSで`lithop ui`を使用している場合は、完了ジョブの「成果物 → モデル」にある「Bambu Studioで開く」から対象3MFを渡せます。XY分割ジョブは、分割モデルカードまたは成果物一覧でタイルを1つずつ選びます。画面に成功と表示されても、OSへ起動要求を渡した段階です。Bambu Studioでファイル名、プレート数、材料、寸法を確認してから次へ進んでください。Bambu Studioで既存プロジェクトを開いていると別の3MFが表示されない場合があるため、その場合は現在の作業を確認してから3MFを保存して開きます。
+
+ボタンが表示されない環境や起動できない場合は、同じ行の「3MFを保存」を使い、Bambu Studioからファイルを開きます。未保存プロジェクトの確認ダイアログが表示された場合は、現在の編集内容を確認してから操作してください。
 
 1. `cmyk_white.stl`ではなく`lithop.3mf`をモデルとして読み込む。
 2. 一つの親オブジェクトの下に、使用材料の部品が同じ位置で組み立てられていることを確認する。

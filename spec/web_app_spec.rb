@@ -7,7 +7,7 @@ require "tempfile"
 require "lithop/web/app"
 
 RSpec.describe Lithop::Web::App do
-  def request_for(project_dir, launcher: nil)
+  def request_for(project_dir, launcher: nil, bambu_studio_launcher: nil)
     launcher ||= Class.new do
       attr_reader :request, :cancelled
 
@@ -18,8 +18,17 @@ RSpec.describe Lithop::Web::App do
 
       def cancel(job_id) = @cancelled = job_id
     end.new
-    application = described_class.configured(project_dir:, launcher:, csrf_token: "test-token")
-    [Rack::MockRequest.new(application), launcher]
+    bambu_studio_launcher ||= Class.new do
+      attr_reader :opened
+
+      def supported? = true
+      def active?(_job_id) = false
+      def open(**request) = @opened = request
+    end.new
+    application = described_class.configured(
+      project_dir:, launcher:, bambu_studio_launcher:, csrf_token: "test-token"
+    )
+    [Rack::MockRequest.new(application), launcher, bambu_studio_launcher]
   end
 
   it "serves the bundled form and static assets with local UI security headers" do
@@ -150,6 +159,96 @@ RSpec.describe Lithop::Web::App do
     end
   end
 
+  it "opens only a recorded completed 3MF in Bambu Studio" do
+    Dir.mktmpdir do |project_dir|
+      output = File.join(project_dir, "build", "model-job")
+      jobs = File.join(project_dir, "build", ".jobs")
+      FileUtils.mkdir_p([output, jobs])
+      model = File.join(output, "lithop.3mf")
+      File.write(model, "model")
+      File.write(
+        File.join(jobs, "model-job.json"),
+        JSON.generate(
+          job_id: "model-job", state: "completed", output_path: output, files: ["lithop.3mf"]
+        )
+      )
+      request, _, bambu_studio_launcher = request_for(project_dir)
+
+      headers = {
+        "HTTP_HOST" => "127.0.0.1", "HTTP_X_CSRF_TOKEN" => "test-token",
+        "CONTENT_TYPE" => "application/x-www-form-urlencoded", input: "name=lithop.3mf"
+      }
+      response = request.post("/api/jobs/model-job/open-in-bambu-studio", headers)
+
+      expect(response.status).to eq(200)
+      expect(JSON.parse(response.body)).to eq(
+        "status" => "launch_requested", "job_id" => "model-job", "name" => "lithop.3mf"
+      )
+      expect(bambu_studio_launcher.opened).to eq(job_id: "model-job", path: File.realpath(model))
+    end
+  end
+
+  it "rejects invalid, missing, and unfinished Bambu Studio open requests" do
+    Dir.mktmpdir do |project_dir|
+      jobs = File.join(project_dir, "build", ".jobs")
+      FileUtils.mkdir_p(jobs)
+      File.write(File.join(jobs, "running.json"), JSON.generate(job_id: "running", state: "running", files: []))
+      request, = request_for(project_dir)
+      headers = {
+        "HTTP_HOST" => "127.0.0.1", "HTTP_X_CSRF_TOKEN" => "test-token",
+        "CONTENT_TYPE" => "application/x-www-form-urlencoded"
+      }
+
+      invalid = request.post(
+        "/api/jobs/running/open-in-bambu-studio", headers.merge(input: "name=../outside.3mf")
+      )
+      wrong_type = request.post(
+        "/api/jobs/running/open-in-bambu-studio", headers.merge(input: "name=model.stl")
+      )
+      unfinished = request.post(
+        "/api/jobs/running/open-in-bambu-studio", headers.merge(input: "name=lithop.3mf")
+      )
+      missing = request.post(
+        "/api/jobs/missing/open-in-bambu-studio", headers.merge(input: "name=lithop.3mf")
+      )
+
+      expect(invalid.status).to eq(422)
+      expect(wrong_type.status).to eq(422)
+      expect(unfinished.status).to eq(409)
+      expect(missing.status).to eq(404)
+    end
+  end
+
+  it "reports a Bambu Studio launch failure without removing the model" do
+    Dir.mktmpdir do |project_dir|
+      output = File.join(project_dir, "build", "model-job")
+      jobs = File.join(project_dir, "build", ".jobs")
+      FileUtils.mkdir_p([output, jobs])
+      model = File.join(output, "lithop.3mf")
+      File.write(model, "model")
+      File.write(
+        File.join(jobs, "model-job.json"),
+        JSON.generate(job_id: "model-job", state: "completed", output_path: output, files: ["lithop.3mf"])
+      )
+      unavailable = Class.new do
+        def supported? = true
+        def active?(_job_id) = false
+        def open(**) = raise Lithop::Web::BambuStudioLauncher::UnavailableError, "Bambu Studio is unavailable"
+      end.new
+      request, = request_for(project_dir, bambu_studio_launcher: unavailable)
+
+      headers = {
+        "HTTP_HOST" => "127.0.0.1", "HTTP_X_CSRF_TOKEN" => "test-token",
+        "CONTENT_TYPE" => "application/x-www-form-urlencoded", input: "name=lithop.3mf"
+      }
+      response = request.post("/api/jobs/model-job/open-in-bambu-studio", headers)
+
+      expect(response.status).to eq(503)
+      expect(JSON.parse(response.body)).to eq("error" => "Bambu Studio is unavailable")
+      expect(File).to exist(model)
+    end
+  end
+
   it "presents recorded tile coordinates and Z plate structure from the manifest" do
     Dir.mktmpdir do |project_dir|
       output = File.join(project_dir, "build", "tiles-job")
@@ -213,6 +312,8 @@ RSpec.describe Lithop::Web::App do
       expect(staged.status).to eq(200)
       expect(rendered.status).to eq(200)
       expect(rendered["content-type"]).to start_with("image/png")
+      expect(rendered["x-lithop-preview-cache"]).to eq("miss")
+      expect(rendered["server-timing"]).to match(/preview;dur=/)
       expect(rendered.body).to start_with("\x89PNG\r\n\x1A\n".b)
     ensure
       input&.close!

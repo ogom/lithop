@@ -28,21 +28,24 @@ Before printing, inspect every layer and confirm the Cyan, Magenta, Yellow, and 
 
 ## Requirements
 
-- macOS and Ruby 4.0 or later
+- macOS, Ruby 4.0 or later, and Rust. CI verifies macOS with Ruby 4.0; the current measured build is Apple silicon.
 - libvips with JPEG, PNG, SVG (librsvg), and ICC profile support
 - For physical printing: Bambu Studio, an AMS-capable printer, and the required PLA Basic Cyan, Magenta, Yellow, and White filaments
 
 ## Install
 
-To install Lithop 0.3.0 from RubyGems, install libvips and the matching Lithop version:
+To install Lithop 0.3.0 from RubyGems, install libvips, Rust for the native palette extension, and the matching Lithop version:
 
 ```sh
-brew install vips
+brew install vips rust
 gem install lithop -v 0.3.0
 lithop --version
+lithop doctor
 ```
 
 The version command must print `0.3.0`.
+The doctor command reports `"backend": "rust"` and the loaded native-extension version. Set
+`LITHOP_DISABLE_NATIVE=1` only when comparing the Ruby fallback.
 
 To work from a source checkout instead:
 
@@ -112,7 +115,8 @@ The command-line options can override individual profile values. Use `--color-pi
 ## Other commands
 
 - `lithop calibrate` creates a 140 × 104 mm calibration SVG and matching printable 3MF with all 120 seven-layer recipes, eight White thickness stages, and a measurement-profile template. A completed measured profile can select both color recipes and the physical White height used by the 3MF, STL, previews, thickness map, and material masks. See [color calibration](docs/calibration.md).
-- `lithop ui` starts the local browser UI on `127.0.0.1:4567`. See [local browser UI](docs/local-ui.md).
+- `lithop ui` starts the local browser UI on `127.0.0.1:4567`; on macOS, completed 3MF artifacts can be handed directly to Bambu Studio from the Jobs view. See [local browser UI](docs/local-ui.md).
+- `lithop doctor` reports whether the Rust acceleration extension is loaded, enabled, and version-matched.
 - `lithop clean` permanently removes the selected project's complete `build/` directory, not one job. See the [command reference](docs/command.md#生成物を削除する) before using it.
 - `lithop --help`, `lithop calibrate --help`, `lithop ui --help`, and `lithop clean --help` show the current command syntax.
 

@@ -2,6 +2,12 @@
 
 require_relative "lib/lithop/version"
 
+packaged_files = Dir[
+  "CHANGELOG.md", "LICENSE", "README.md", "RELEASING.md", "bin/lithop",
+  "Cargo.lock", "Cargo.toml", "docs/**/*", "ext/**/*", "lib/**/*.rb",
+  "lib/lithop/web/**/*.{erb,css,js}", "sig/**/*.rbs"
+]
+
 Gem::Specification.new do |spec|
   spec.name = "lithop"
   spec.version = Lithop::VERSION
@@ -20,23 +26,15 @@ Gem::Specification.new do |spec|
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files = Dir[
-    "CHANGELOG.md",
-    "LICENSE",
-    "README.md",
-    "RELEASING.md",
-    "bin/lithop",
-    "docs/**/*",
-    "lib/**/*.rb",
-    "lib/lithop/web/**/*.{erb,css,js}",
-    "sig/**/*.rbs"
-  ]
+  spec.files = packaged_files
   spec.bindir = "bin"
   spec.executables = ["lithop"]
   spec.require_paths = ["lib"]
+  spec.extensions = ["ext/lithop_native/extconf.rb"]
 
   spec.add_dependency "puma", "~> 7.0"
   spec.add_dependency "rackup", "~> 2.2"
+  spec.add_dependency "rb_sys", "~> 0.9.128"
   spec.add_dependency "rexml", "~> 3.4"
   spec.add_dependency "ruby-vips", "~> 2.3"
   spec.add_dependency "rubyzip", "~> 3.7"

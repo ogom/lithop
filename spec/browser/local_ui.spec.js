@@ -67,6 +67,9 @@ test("keeps the selected image and settings while creating and reviewing a job",
   ]);
   await page.getByRole("tab", { name: "成果物", exact: true }).click();
   await expect(page.locator('#artifact-list a[href$="lithop.3mf"]')).toBeVisible();
+  await page.getByRole("button", { name: "lithop.3mfをBambu Studioで開く" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#bambu-open-status")).toContainText("Bambu Studioに渡しました");
   await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
   await expect(page.locator("#image-input")).toHaveValue(/cmy-color-circle\.svg$/);
   await expect(page.locator("#brightness")).toHaveValue("12");
@@ -126,6 +129,25 @@ test("measures normalized JPEG, PNG, and SVG preview response targets", async ({
   });
 });
 
+test("reports preview pipeline timing and reuses an identical server render", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    window.__lithopPreviewTimings = [];
+    window.addEventListener("lithop:preview-timing", (event) => window.__lithopPreviewTimings.push(event.detail));
+  });
+  await page.locator("#image-input").setInputFiles(example);
+  await expect.poll(() => page.evaluate(() => window.__lithopPreviewTimings.length)).toBeGreaterThan(0);
+
+  await page.locator("#brightness").fill("1");
+  await expect(page.locator("#draft-state")).toContainText("反映済み");
+  await page.locator("#brightness").fill("0");
+  await expect.poll(() => page.evaluate(() => window.__lithopPreviewTimings.at(-1)?.cache)).toBe("hit");
+
+  const timing = await page.evaluate(() => window.__lithopPreviewTimings.at(-1));
+  expect(timing.total_ms).toBeGreaterThan(0);
+  expect(timing.server_timing).toContain("preview;dur=");
+});
+
 test("shows common tile boundaries and dependent Z settings", async ({ page }) => {
   await page.goto("/");
   await page.locator("details").filter({ hasText: "XYタイルとZプレート" }).locator("summary").click();
@@ -153,7 +175,10 @@ test("shows every split 3MF and its tile preview", async ({ page }) => {
   await expect(cards).toHaveCount(2);
   await expect(cards.locator("img")).toHaveCount(2);
   await expect(cards.getByRole("link", { name: "3MFを保存" })).toHaveCount(2);
+  await expect(cards.getByRole("button", { name: /Bambu Studioで開く/ })).toHaveCount(2);
   await expect(page.locator('#artifact-list a[href*="tiles/"][href$=".3mf"]')).toHaveCount(2);
+  await cards.nth(1).getByRole("button", { name: /Bambu Studioで開く/ }).click();
+  await expect(page.locator("#bambu-open-status")).toContainText("tile_r01_c02.3mf をBambu Studioに渡しました");
 });
 
 test("pans enlarged input and result previews by dragging", async ({ page }) => {
@@ -591,7 +616,7 @@ test("searches history, downloads a confirmed artifact ZIP, and bulk deletes fin
 });
 
 test("pages many jobs and lazily renders a many-tile result", async ({ page }, testInfo) => {
-  const seeded = await page.request.get("/__test__/seed-history?count=60&tiles=24");
+  const seeded = await page.request.get("/__test__/seed-history?count=1000&tiles=24");
   expect(seeded.ok()).toBe(true);
   const started = Date.now();
   await page.goto("/");
@@ -617,7 +642,7 @@ test("pages many jobs and lazily renders a many-tile result", async ({ page }, t
   await expect(page.locator("#tile-result-list .tile-result-card")).toHaveCount(24);
   expect(await page.locator("#tile-result-list img").first().getAttribute("loading")).toBe("lazy");
   await testInfo.attach("p3-history-performance.json", {
-    body: JSON.stringify({ jobs: 60, tiles: 24, firstPageMilliseconds }, null, 2),
+    body: JSON.stringify({ jobs: 1000, tiles: 24, firstPageMilliseconds }, null, 2),
     contentType: "application/json"
   });
 });

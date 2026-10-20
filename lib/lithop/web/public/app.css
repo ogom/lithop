@@ -194,9 +194,14 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .tile-result-card { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); }
 .tile-result-card:focus-visible, .tile-result-card.is-selected { outline: 3px solid rgba(0,134,214,.3); outline-offset: 2px; border-color: var(--cyan); }
 .tile-result-card img { display: block; width: 100%; aspect-ratio: 140 / 104; object-fit: contain; border-radius: 10px; background: #f1f0eb; image-rendering: auto; }
-.tile-result-card figcaption { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
+.tile-result-card figcaption { display: grid; gap: 9px; margin-top: 9px; }
 .tile-result-card strong { overflow: hidden; font: 700 0.78rem ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .tile-result-card a { flex: none; color: var(--green); font-size: 0.78rem; font-weight: 700; }
+.tile-model-actions, .artifact-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.tile-model-actions .bambu-open-button, .artifact-actions .bambu-open-button { padding: 7px 9px; font-size: 0.72rem; }
+.artifact-status { min-height: 1.2em; margin: 8px 0 12px; }
+.artifact-status[data-state="success"] { color: var(--green); }
+.artifact-status[data-state="error"] { color: var(--danger); font-weight: 800; }
 .tile-result-card > small { display: block; margin-top: 8px; color: var(--muted); font-size: 0.7rem; line-height: 1.5; }
 .tile-result-card .tile-preview-missing { display: grid; place-items: center; width: 100%; aspect-ratio: 140 / 104; border-radius: 10px; background: #f1f0eb; color: var(--muted); font-size: 0.78rem; }
 .tile-map { display: grid; gap: 5px; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 12px; padding: 8px; background: #eeece4; }
@@ -209,7 +214,7 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .artifact-list ul { list-style: none; margin: 8px 0 0; padding: 0; }
 .artifact-list ul li { margin-bottom: 7px; }
 .artifact-list strong { font-size: 0.78rem; }
-.artifact-list a { display: block; overflow: hidden; color: var(--green); font: 0.78rem ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-list a { display: block; overflow: hidden; min-width: 0; color: var(--green); font: 0.78rem ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
 
 .history-controls { display: grid; grid-template-columns: minmax(180px,2fr) repeat(4,minmax(130px,1fr)); gap: 10px; margin-bottom: 14px; }
 .history-controls label { display: grid; gap: 4px; color: var(--muted); font-size: 0.72rem; }

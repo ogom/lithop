@@ -194,9 +194,21 @@ class BrowserTestLauncher
   end
 end
 
+class BrowserTestBambuStudioLauncher
+  attr_reader :opened
+
+  def initialize = @opened = []
+  def supported? = true
+  def active?(_job_id) = false
+  def open(**request) = @opened << request
+end
+
 project_dir = Dir.mktmpdir("lithop-browser-")
 launcher = BrowserTestLauncher.new(project_dir)
-application = Lithop::Web::App.configured(project_dir:, launcher:, csrf_token: "browser-test-token")
+bambu_studio_launcher = BrowserTestBambuStudioLauncher.new
+application = Lithop::Web::App.configured(
+  project_dir:, launcher:, bambu_studio_launcher:, csrf_token: "browser-test-token"
+)
 application.get "/__test__/seed-history" do
   content_type :json
   JSON.generate(

@@ -2,9 +2,11 @@
 
 require "optparse"
 require "fileutils"
+require "json"
 
 module Lithop
   # Command-line interface for generating and cleaning lithophane projects.
+  # rubocop:disable-next Metrics/ClassLength
   class CLI
     include CLICalibration
 
@@ -18,10 +20,12 @@ module Lithop
       @cwd = File.expand_path(cwd)
     end
 
+    # rubocop:disable-next Metrics/AbcSize
     def run(argv)
       return clean(argv.drop(1)) if argv.first == "clean"
       return calibrate(argv.drop(1)) if argv.first == "calibrate"
       return web_ui(argv.drop(1)) if argv.first == "ui"
+      return diagnostics(argv.drop(1)) if argv.first == "doctor"
 
       options = {}
       parser = CLIOptions.generation(options, @out)
@@ -58,6 +62,13 @@ module Lithop
     end
 
     private
+
+    def diagnostics(arguments)
+      raise InputError, "doctor does not accept arguments" unless arguments.empty?
+
+      @out.puts JSON.pretty_generate(Native.diagnostics)
+      0
+    end
 
     def report_estimate(estimate)
       @out.puts(

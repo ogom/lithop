@@ -11,6 +11,7 @@ module Lithop
     # rubocop:disable-next Metrics/ClassLength
     class JobStore
       JOB_ID_PATTERN = /\A[0-9A-Za-z][0-9A-Za-z._-]*\z/
+      INDEX_SCHEMA_VERSION = 1
 
       def initialize(project_dir:)
         @project_dir = File.expand_path(project_dir)
@@ -18,6 +19,9 @@ module Lithop
         @jobs_dir = File.join(@build_dir, ".jobs")
         @work_root = File.join(@build_dir, JobLauncher::WORK_DIRECTORY)
         @archives_dir = File.join(@build_dir, ".downloads")
+        @index_path = File.join(@jobs_dir, ".index.json")
+        @index_mutex = Mutex.new
+        @index = load_index
         recover_archives
       end
 
@@ -33,18 +37,13 @@ module Lithop
       end
 
       def recent(limit: 12)
-        return [] unless File.directory?(@jobs_dir)
-
-        names = Dir.glob("*.json", base: @jobs_dir).reject { |name| name.end_with?(".request.json") }
-        records = names.sort.reverse.filter_map do |name|
-          fetch(File.basename(name, ".json"))
-        end
-        active, final = records.partition { |record| JobExecution::ACTIVE_STATES.include?(record["state"]) }
-        (active + final).first(limit)
+        entries = indexed_entries.sort_by { |entry| entry.fetch("job_id") }.reverse
+        active, final = entries.partition { |entry| JobExecution::ACTIVE_STATES.include?(entry["state"]) }
+        (active + final).first(limit).filter_map { |entry| fetch(entry.fetch("job_id")) }
       end
 
       def page(limit: 12, offset: 0, filters: {})
-        records = all_records
+        records = indexed_entries
         term = filters[:query].to_s.strip.downcase
         records.select! { |record| searchable_text(record).include?(term) } unless term.empty?
         records.select! { |record| state_match?(record.fetch("state", ""), filters[:state]) }
@@ -55,8 +54,9 @@ module Lithop
           records.select! { |record| record["created_at"].to_s[0, 10] <= filters[:date_to] }
         end
         records = sort_records(records, filters[:sort])
+        selected = records.slice(offset, limit) || []
         {
-          "jobs" => records.slice(offset, limit) || [], "total" => records.length,
+          "jobs" => selected.filter_map { |record| fetch(record.fetch("job_id")) }, "total" => records.length,
           "offset" => offset, "limit" => limit
         }
       end
@@ -149,17 +149,93 @@ module Lithop
           FileUtils.rm_f(File.join(@jobs_dir, "#{job_id}.transition.lock"))
           FileUtils.rm_f(File.join(@jobs_dir, "#{job_id}.request.json"))
           FileUtils.rm_f(File.join(@jobs_dir, "#{job_id}.json"))
+          remove_index_entry(job_id)
           removed
         end
       end
 
       private
 
-      def all_records
+      def indexed_entries
         return [] unless File.directory?(@jobs_dir)
 
-        Dir.glob("*.json", base: @jobs_dir).reject { |name| name.end_with?(".request.json") }.filter_map do |name|
-          fetch(File.basename(name, ".json"))
+        @index_mutex.synchronize do
+          names = Dir.glob("*.json", base: @jobs_dir).reject { |name| name.end_with?(".request.json") }
+          job_ids = names.map { |name| File.basename(name, ".json") }
+          existing = job_ids.to_h { |job_id| [job_id, true] }
+          changed = @index.keys.any? { |job_id| !existing.key?(job_id) }
+          @index.select! { |job_id, _entry| existing.key?(job_id) }
+          job_ids.each do |job_id|
+            entry = build_index_entry(job_id, @index[job_id])
+            next unless entry
+            next if entry == @index[job_id]
+
+            @index[job_id] = entry
+            changed = true
+          end
+          write_index if changed
+          @index.values.map(&:dup)
+        end
+      end
+
+      def build_index_entry(job_id, previous)
+        status_path = File.join(@jobs_dir, "#{job_id}.json")
+        request_path = File.join(@jobs_dir, "#{job_id}.request.json")
+        signature = file_signature(status_path)
+        request_signature = file_signature(request_path)
+        if previous && previous["signature"] == signature && previous["request_signature"] == request_signature
+          return previous
+        end
+
+        status = JSON.parse(File.read(status_path))
+        request = request_signature ? JSON.parse(File.read(request_path)) : {}
+        {
+          "job_id" => job_id,
+          "state" => status.fetch("state", ""),
+          "created_at" => status["created_at"].to_s,
+          "updated_at" => status["updated_at"].to_s,
+          "input_name" => request["input_name"].to_s,
+          "signature" => signature,
+          "request_signature" => request_signature
+        }
+      rescue JSON::ParserError, SystemCallError
+        previous
+      end
+
+      def file_signature(path)
+        return unless File.file?(path) && !File.symlink?(path)
+
+        stat = File.stat(path)
+        [stat.size, stat.mtime.to_f]
+      end
+
+      def load_index
+        return {} unless File.file?(@index_path) && !File.symlink?(@index_path)
+
+        document = JSON.parse(File.read(@index_path))
+        return {} unless document["schema_version"] == INDEX_SCHEMA_VERSION
+
+        document.fetch("jobs", {}).select { |job_id, _entry| job_id.match?(JOB_ID_PATTERN) }
+      rescue JSON::ParserError, KeyError, SystemCallError
+        {}
+      end
+
+      def write_index
+        temporary = "#{@index_path}.tmp-#{Process.pid}"
+        File.write(
+          temporary,
+          JSON.generate("schema_version" => INDEX_SCHEMA_VERSION, "jobs" => @index) << "\n",
+          mode: "w", perm: 0o600
+        )
+        File.rename(temporary, @index_path)
+      ensure
+        FileUtils.rm_f(temporary) if defined?(temporary)
+      end
+
+      def remove_index_entry(job_id)
+        @index_mutex.synchronize do
+          @index.delete(job_id)
+          write_index if File.directory?(@jobs_dir)
         end
       end
 

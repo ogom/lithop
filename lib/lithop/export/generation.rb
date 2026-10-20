@@ -6,6 +6,7 @@ module Lithop
   class ExportGeneration
     Result = Data.define(:files, :triangle_count, :three_mf_triangle_count, :material_count, :object_count)
     TileEstimate = Data.define(:triangle_count, :triangle_counts_by_material)
+    PlannedTile = Data.define(:tile, :material_model, :mesh_plan, :estimate)
 
     def initialize(settings:, input_settings_path:, calibration:, progress:, job_progress:, instrumentation:)
       @settings = settings
@@ -36,14 +37,15 @@ module Lithop
       end
       tile_layout = TileLayout.new(@settings)
       report_job_progress(:triangle_planning, 40, "Planning mesh triangles")
-      tile_estimates = @instrumentation.measure(:triangle_planning) do
-        estimate_tiles(tile_layout, material_model, white_heights)
+      planned_tiles = @instrumentation.measure(:triangle_planning) do
+        plan_tiles(tile_layout, material_model, white_heights)
       end
+      tile_estimates = planned_tiles.map(&:estimate)
       validate_total_triangle_count!(tile_estimates)
       report_estimate(tile_estimates)
       report_job_progress(:artifact_write, 50, "Writing model artifacts")
       artifacts = write_artifacts(
-        directory, geometry, material_model, tile_layout, white_heights, image.corrected_preview_png
+        directory, geometry, material_model, tile_layout, planned_tiles, white_heights, image.corrected_preview_png
       )
       report_job_progress(:metadata_write, 95, "Writing job metadata")
       write_supporting_files(directory, source, job_id, artifacts)
@@ -72,13 +74,16 @@ module Lithop
       ).call
     end
 
-    def estimate_tiles(tile_layout, material_model, white_heights)
+    def plan_tiles(tile_layout, material_model, white_heights)
       tile_layout.tiles.map do |tile|
-        _tile_model, plan = build_tile_plan(tile, material_model, white_heights)
-        TileEstimate.new(
-          triangle_count: plan.triangle_count,
-          triangle_counts_by_material: plan.triangle_counts_by_material
+        tile_model, mesh_plan = @instrumentation.measure(:tile_plan_estimate) do
+          build_tile_plan(tile, material_model, white_heights)
+        end
+        estimate = TileEstimate.new(
+          triangle_count: mesh_plan.triangle_count,
+          triangle_counts_by_material: mesh_plan.triangle_counts_by_material
         )
+        PlannedTile.new(tile:, material_model: tile_model, mesh_plan:, estimate:)
       end
     end
 
@@ -135,25 +140,26 @@ module Lithop
       raise ConfigurationError, @settings.triangle_limit_message("physical CMYW tiled mesh", count)
     end
 
-    def write_artifacts(directory, geometry, material_model, tile_layout, white_heights, corrected_input)
+    # rubocop:disable-next Metrics/ParameterLists
+    def write_artifacts(directory, geometry, material_model, tile_layout, planned_tiles, white_heights, corrected_input)
       stl_name = "cmyk_white.stl"
       triangle_count = @instrumentation.measure(:stl_write) do
         STL.write(File.join(directory, stl_name), geometry.each_triangle)
       end
       FileUtils.mkdir_p(File.join(directory, "tiles")) if tile_layout.tiles.length > 1
-      tile_artifacts = tile_layout.tiles.each_with_index.map do |tile, index|
-        percent = 60 + ((index * 20.0) / tile_layout.tiles.length)
-        report_job_progress(:three_mf_write, percent, "Writing 3MF tile #{index + 1}/#{tile_layout.tiles.length}")
-        tile_model, mesh_plan = build_tile_plan(tile, material_model, white_heights)
+      tile_artifacts = planned_tiles.each_with_index.map do |planned, index|
+        tile = planned.tile
+        percent = 60 + ((index * 20.0) / planned_tiles.length)
+        report_job_progress(:three_mf_write, percent, "Writing 3MF tile #{index + 1}/#{planned_tiles.length}")
         name = tile_layout.tiles.one? ? "lithop.3mf" : "tiles/#{tile.id}.3mf"
         three_mf = @instrumentation.measure(:three_mf_write) do
           ThreeMF.write(
-            File.join(directory, name), parts: mesh_plan.parts, instrumentation: @instrumentation,
+            File.join(directory, name), parts: planned.mesh_plan.parts, instrumentation: @instrumentation,
                                         settings: @settings
           )
         end
-        mesh_plan.validate!(three_mf)
-        TileArtifact.new(tile:, name:, three_mf:, material_model: tile_model)
+        planned.mesh_plan.validate!(three_mf)
+        TileArtifact.new(tile:, name:, three_mf:, material_model: planned.material_model)
       end
       if tile_layout.tiles.length > 1
         TileLayoutSVG.write(File.join(directory, "tile-layout.svg"), settings: @settings, layout: tile_layout)

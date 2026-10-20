@@ -1,6 +1,6 @@
 # コマンドリファレンス
 
-このページはCLI構文とオプションの正本です。実行中の版では`lithop --help`、`lithop calibrate --help`、`lithop ui --help`、`lithop clean --help`でも確認できます。ソースチェックアウトでは、例の`lithop`を`bundle exec lithop`に読み替えてください。
+このページはCLI構文とオプションの正本です。実行中の版では`lithop --help`、`lithop calibrate --help`、`lithop ui --help`、`lithop clean --help`でも確認できます。`lithop doctor`はRust拡張の状態をJSONで表示します。ソースチェックアウトでは、例の`lithop`を`bundle exec lithop`に読み替えてください。
 
 ## 画像からリトファンを生成する
 
@@ -202,11 +202,12 @@ lithop clean --project-dir /path/to/project
 
 `build/`がなければ正常終了します。ファイルシステムのルート、`build`自体がシンボリックリンク、または`build`がディレクトリではない場合は削除を拒否します。
 
-## バージョンとヘルプを表示する
+## バージョン、診断、ヘルプを表示する
 
 | コマンド | 内容 |
 | --- | --- |
 | `lithop --version` | バージョンを表示する。短縮形は`lithop -v` |
+| `lithop doctor` | Rustバックエンドのロード・有効状態、拡張とLithopのバージョン、Ruby、実行プラットフォームをJSONで表示する |
 | `lithop --help` | 通常生成の構文とオプションを表示する |
 | `lithop calibrate --help` | 校正片生成の構文とオプションを表示する |
 | `lithop ui --help` | ローカルUIの起動オプションを表示する |

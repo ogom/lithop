@@ -83,6 +83,24 @@ RSpec.describe Lithop::Web::JobStore do
     end
   end
 
+  it "persists its lightweight index and refreshes externally changed jobs" do
+    Dir.mktmpdir do |project_dir|
+      write_job(project_dir, "indexed", state: "running")
+      store = described_class.new(project_dir:)
+
+      expect(store.page.fetch("jobs").first).to include("state" => "running")
+      index_path = File.join(project_dir, "build", ".jobs", ".index.json")
+      expect(JSON.parse(File.read(index_path))).to include("schema_version" => 1)
+
+      write_job(project_dir, "indexed", state: "completed", output: true)
+      expect(store.page.fetch("jobs").first).to include("state" => "completed")
+
+      File.write(index_path, "invalid")
+      rebuilt = described_class.new(project_dir:)
+      expect(rebuilt.page.fetch("jobs").first).to include("job_id" => "indexed")
+    end
+  end
+
   it "archives only published model files or every published artifact" do
     Dir.mktmpdir do |project_dir|
       write_job(project_dir, "archive", state: "completed", output: true)

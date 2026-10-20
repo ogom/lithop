@@ -8,6 +8,7 @@ module Lithop
   class InputError < Error; end
 end
 
+require_relative "lithop/native"
 require_relative "lithop/sampling_grid"
 require_relative "lithop/layer_structure"
 require_relative "lithop/settings"

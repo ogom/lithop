@@ -21,6 +21,16 @@ bundle exec lithop --version
 
 **関連:** [導入と基本操作](getting-started.md#インストール)
 
+## Rustネイティブ拡張をビルドできない
+
+**症状:** `gem install lithop`または`bundle exec rake compile`が、Cargo、Rustコンパイラ、`rb_sys`に関するエラーで終了します。
+
+**原因候補:** Rustツールチェーンが未導入、またはRubyを切り替えた後にネイティブ拡張を再ビルドしていません。
+
+**対処:** macOSでは`brew install rust`を実行し、`rustc --version`と`cargo --version`を確認してからLithopを再インストールします。ソースチェックアウトでは`bundle install`に続けて`bundle exec rake compile`を実行します。`lithop doctor`で`backend: rust`と拡張バージョンを確認できます。Ruby版との比較用に`LITHOP_DISABLE_NATIVE=1`を指定できますが、インストール時の拡張ビルドを省略する設定ではありません。
+
+現在のCI対象はmacOSとRuby 4.0で、実測環境はApple siliconです。他のOS、CPU、Ruby ABI向けのビルド済みgemは配布せず、0.3.0は利用環境でRust拡張をビルドするソースgemとして扱います。
+
 ## 入力画像を読めない
 
 **最初の確認:** ファイルが実在し、JPEG、PNG、またはSVGとして画像アプリで開けるか確認します。

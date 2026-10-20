@@ -2,14 +2,24 @@
 
 This checklist prepares and publishes one immutable gem version. Run every command from the repository root.
 
+Confirm that Ruby 4.0, Rust, Cargo, and libvips are available before installing dependencies:
+
+```sh
+ruby --version
+rustc --version
+cargo --version
+bundle exec ruby -rvips -e 'puts Vips.version_string'
+```
+
 ## 1. Prepare the version
 
 1. Update `Lithop::VERSION` in `lib/lithop/version.rb`.
 2. Add or update the matching version and release date in `CHANGELOG.md`. Keep the changelog concise; add an `Unreleased` section only when subsequent changes need one.
 3. Confirm the README installation and usage examples match the release.
 4. Manually open the external links in `README.md` and `docs/`; automated tests intentionally validate only local links and anchors.
-5. Commit all intended files and verify that `git status --short` is empty.
-6. When the local UI changed, run the Chromium and WebKit browser suite with the development-only Node.js 22 toolchain:
+5. Confirm that `LICENSE` and `lithop.gemspec` identify Lithop as MIT. Review newly bundled code, images, fonts, and binaries for third-party terms. The current source gem does not bundle its Ruby dependencies, Playwright, libvips, or Rust crate sources, so it does not need a separate `THIRD_PARTY_NOTICES` file. Re-run this review before vendoring dependencies or publishing a precompiled native gem, and include the required license and notice texts when applicable.
+6. Commit all intended files and verify that `git status --short` is empty.
+7. When the local UI changed, run the Chromium and WebKit browser suite with the development-only Node.js 22 toolchain:
 
 ```sh
 npm install
@@ -17,13 +27,13 @@ npx playwright install chromium webkit
 npm run test:browser
 ```
 
-7. Run the non-publishing release check:
+8. Run the non-publishing release check:
 
 ```sh
 bundle exec rake release:check
 ```
 
-The check runs the specs, RuboCop, and RBS validation; builds the gem; checks its version, metadata, runtime dependency, and packaged documentation; installs it into a temporary isolated gem directory; and executes the installed `lithop --version` command.
+The check compiles the Rust extension, runs the Rust and Ruby specs, RuboCop, and RBS validation; builds the gem; checks its version, metadata, runtime dependency, and packaged documentation; installs it into a temporary isolated gem directory; and executes the installed `lithop --version` command.
 
 ## 2. Prepare publishing services
 

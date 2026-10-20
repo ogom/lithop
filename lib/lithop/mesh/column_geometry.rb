@@ -35,6 +35,14 @@ module Lithop
 
     def release_cache! = @topology.release_cache!
 
+    def native_indexed_mesh
+      Native.column_mesh(
+        @model.columns, @model.rows, @model.x_boundaries, @model.y_boundaries, @model.z_boundaries,
+        @intervals.flat_map { |value| value || [-1, -1] },
+        @topology.group_ids, @topology.group_count
+      )
+    end
+
     def triangle_count
       @model.rows.times.sum do |row|
         @model.columns.times.sum do |column|

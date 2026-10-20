@@ -15,7 +15,13 @@ module Lithop
     EXPECTED_FILES = (
       %w[
         CHANGELOG.md
+        Cargo.lock
+        Cargo.toml
         docs/images/cmyw-lithophane-preview.png
+        ext/lithop_native/Cargo.toml
+        ext/lithop_native/build.rs
+        ext/lithop_native/extconf.rb
+        ext/lithop_native/src/lib.rs
         LICENSE
         README.md
         RELEASING.md
@@ -30,6 +36,7 @@ module Lithop
         lib/lithop/image/placement.rb
         lib/lithop/job_directory.rb
         lib/lithop/layer_structure.rb
+        lib/lithop/native.rb
         lib/lithop/sampling_grid.rb
         lib/lithop/version.rb
         lib/lithop/web/app.rb
@@ -83,13 +90,14 @@ module Lithop
     end
 
     def validate_metadata(specification)
+      abort "built gem license is not MIT" unless specification.license == "MIT"
       abort "built gem does not require MFA" unless specification.metadata["rubygems_mfa_required"] == "true"
       abort "built gem has no changelog URI" unless specification.metadata["changelog_uri"]
       abort "built gem does not expose the lithop executable" unless specification.executables.include?("lithop")
     end
 
     def validate_dependencies(specification)
-      %w[puma rackup ruby-vips rubyzip sinatra].each do |name|
+      %w[puma rackup rb_sys ruby-vips rubyzip sinatra].each do |name|
         dependency = specification.runtime_dependencies.find { |candidate| candidate.name == name }
         abort "built gem does not depend on #{name}" unless dependency
       end
@@ -105,6 +113,7 @@ module Lithop
 
         install_gem(environment, gem_home, bin_dir, gem_file)
         run_cli(environment, bin_dir)
+        run_native_extension(environment)
         run_ui(environment, directory)
       end
     end
@@ -120,6 +129,11 @@ module Lithop
     def run_cli(environment, bin_dir)
       stdout = run!(environment, [File.join(bin_dir, "lithop"), "--version"], "installed CLI")
       abort "installed CLI reported #{stdout.strip.inspect}" unless stdout.strip == Lithop::VERSION
+    end
+
+    def run_native_extension(environment)
+      code = 'require "lithop"; abort "Rust extension unavailable" unless Lithop::Native.available?'
+      run!(environment, [RbConfig.ruby, "-e", code], "installed Rust extension")
     end
 
     def run_ui(environment, project_dir)

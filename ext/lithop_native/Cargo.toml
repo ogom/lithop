@@ -1,0 +1,17 @@
+[package]
+name = "lithop_native"
+version = "0.3.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+magnus = "0.8.2"
+rb-sys = { version = "0.9", features = ["stable-api-compiled-fallback"] }
+
+[build-dependencies]
+rb-sys-env = "0.2.2"

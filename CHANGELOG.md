@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.3.0 - 2026-10-18
+## 0.3.0 - 2026-10-20
 
-- Adds a loopback-only Sinatra/ERB/Puma UI with responsive Create, Jobs, and Presets panes.
-- Provides immediate JPEG/PNG/SVG input previews, reusable settings, drafts, and engine-rendered result views.
-- Adds persistent job progress and cancellation, searchable history, result comparison, ZIP downloads, and safe bulk deletion.
-- Bundles the UI assets in the gem and verifies the workflows with Chromium/WebKit Playwright coverage and an installed-gem smoke test.
+- Adds a loopback-only Sinatra/ERB/Puma UI with responsive Create, Jobs, and Presets panes, faster immediate JPEG/PNG/SVG input previews, reusable settings, drafts, and engine-rendered result views.
+- Adds persistent job progress and cancellation, indexed searchable history, result comparison, ZIP downloads, safe bulk deletion, direct opening of completed 3MF artifacts in Bambu Studio on macOS, and bounded preview caching with browser timing diagnostics.
+- Adds a Rust extension for CMY recipe selection, CMY mesh generation, 3MF vertex indexing, and XML output; the standard chart benchmark median improves from 36.800 seconds to 13.946 seconds while retaining the Ruby comparison path.
+- Packages the UI and Rust sources in the source gem, adds `lithop doctor`, and verifies macOS/Ruby 4.0 builds, installed-gem native loading, Chromium/WebKit workflows, and Bambu Studio loading of unsplit and split 3MF outputs.
 
 ## 0.2.0 - 2026-10-16
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "digest"
 require "fileutils"
 require "rack/utils"
 require "securerandom"
@@ -10,6 +11,7 @@ require_relative "job_launcher"
 require_relative "job_store"
 require_relative "preview_store"
 require_relative "settings_library"
+require_relative "bambu_studio_launcher"
 
 module Lithop
   module Web
@@ -47,7 +49,10 @@ module Lithop
       set :public_folder, File.join(ROOT, "public")
       set :views, File.join(ROOT, "views")
 
-      def self.configured(project_dir:, launcher: nil, preview_store: nil, csrf_token: SecureRandom.hex(32))
+      def self.configured(
+        project_dir:, launcher: nil, preview_store: nil, bambu_studio_launcher: nil,
+        csrf_token: SecureRandom.hex(32)
+      )
         Class.new(self).tap do |application|
           expanded = File.expand_path(project_dir)
           application.set :project_dir, expanded
@@ -55,6 +60,7 @@ module Lithop
           application.set :job_store, JobStore.new(project_dir: expanded)
           application.set :preview_store, preview_store || PreviewStore.new(project_dir: expanded)
           application.set :settings_library, SettingsLibrary.new(project_dir: expanded)
+          application.set :bambu_studio_launcher, bambu_studio_launcher || BambuStudioLauncher.new
           application.set :csrf_token, csrf_token
         end
       end
@@ -113,9 +119,14 @@ module Lithop
 
       post "/api/previews/:id/render" do
         resolved = SettingsForm.new(project_dir: settings.project_dir).resolve(params)
-        png = settings.preview_store.with_input(params.fetch("id")) do |path, _filename|
+        cache_key = Digest::SHA256.hexdigest(JSON.generate(resolved.to_h))
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        png, cache_hit = settings.preview_store.render(params.fetch("id"), cache_key) do |path, _filename|
           ImagePipeline.new(resolved).preview_png(path)
         end
+        elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000
+        headers "Server-Timing" => %(preview;dur=#{elapsed.round(3)}),
+                "X-Lithop-Preview-Cache" => (cache_hit ? "hit" : "miss")
         content_type "image/png"
         body png
       rescue Error, SystemCallError => e
@@ -251,6 +262,10 @@ module Lithop
             errors << { job_id:, error: "job process is still exiting" }
             next
           end
+          if bambu_studio_active?(job_id)
+            errors << { job_id:, error: "Bambu Studio launch is still in progress" }
+            next
+          end
           removed = settings.job_store.delete(job_id)
           deleted << { job_id: }.merge(removed)
         rescue Error => e
@@ -276,11 +291,37 @@ module Lithop
       post "/jobs/:id/delete" do
         job_id = params.fetch("id")
         halt 422, json_error("job process is still exiting") if launcher_active?(job_id)
+        halt 409, json_error("Bambu Studio launch is still in progress") if bambu_studio_active?(job_id)
         removed = settings.job_store.delete(job_id)
         content_type :json
         JSON.generate({ ok: true, job_id: }.merge(removed))
       rescue Error => e
         halt 422, json_error(e.message)
+      end
+
+      post "/api/jobs/:id/open-in-bambu-studio" do
+        job_id = params.fetch("id")
+        name = params["name"].to_s
+        halt 422, json_error("select a valid 3MF artifact") unless valid_3mf_artifact_name?(name)
+
+        record = settings.job_store.fetch(job_id)
+        halt 404, json_error("job not found") unless record
+        halt 409, json_error("job is not complete") unless record["state"] == "completed"
+
+        path = settings.job_store.artifact(job_id, name)
+        settings.bambu_studio_launcher.open(job_id:, path:)
+        content_type :json
+        JSON.generate(status: "launch_requested", job_id:, name:)
+      rescue BambuStudioLauncher::BusyError => e
+        halt 409, json_error(e.message)
+      rescue BambuStudioLauncher::UnsupportedPlatformError, BambuStudioLauncher::InvalidArtifactError => e
+        halt 422, json_error(e.message)
+      rescue BambuStudioLauncher::UnavailableError => e
+        halt 503, json_error(e.message)
+      rescue BambuStudioLauncher::LaunchTimeoutError => e
+        halt 504, json_error(e.message)
+      rescue Error => e
+        halt 404, json_error(e.message)
       end
 
       get "/jobs/:id/files/*" do
@@ -358,6 +399,18 @@ module Lithop
         settings.launcher.respond_to?(:active?) && settings.launcher.active?(job_id)
       end
 
+      def bambu_studio_active?(job_id)
+        settings.bambu_studio_launcher.active?(job_id)
+      end
+
+      def valid_3mf_artifact_name?(name)
+        parts = name.split("/", -1)
+        return false if name.start_with?("/") || name.include?("\\")
+        return false if parts.empty? || parts.any? { |part| part.empty? || %w[. ..].include?(part) }
+
+        File.extname(name).casecmp?(".3mf")
+      end
+
       def start_job(resolved)
         preview_id = params["preview_id"].to_s
         return start_staged_job(preview_id, resolved) unless preview_id.empty?
@@ -407,6 +460,7 @@ module Lithop
 
       def present_job(record)
         presented = record.dup
+        presented["can_open_in_bambu_studio"] = settings.bambu_studio_launcher.supported?
         files = record.fetch("files", []) || []
         presented["artifacts"] = files.map do |name|
           { "name" => name, "url" => artifact_url(record.fetch("job_id"), name) }
