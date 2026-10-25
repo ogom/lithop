@@ -136,9 +136,7 @@ module Lithop
     end
 
     def source_object_id(assembly)
-      return 3 if assembly.region == "top_white"
-
-      assembly.region.delete_prefix("color_region_").to_i - 1
+      assembly.region.delete_prefix("z_part_").to_i - 1
     end
 
     def number(value) = format("%.9g", value)
@@ -150,12 +148,13 @@ module Lithop
 
     def layer_ranges_xml
       object_id = @assemblies.length
-      min_z = @settings.top_white_start
-      max_z = @settings.maximum_thickness
+      min_z = @settings.layer_structure.top_white_start
+      max_z = @settings.effective_maximum_thickness
       if @settings.separate_z_parts
-        color_end = @settings.layer_structure.color_region_end
-        min_z = (min_z - color_end).round(9)
-        max_z = (max_z - color_end).round(9)
+        source_z_min = last_plate_source_z_min
+        base_white = @settings.z_part_base_white_thickness(@settings.resolved_z_part_count - 1)
+        min_z = (min_z - source_z_min + base_white).round(9)
+        max_z = (max_z - source_z_min + base_white).round(9)
       end
       <<~XML
         <?xml version="1.0" encoding="utf-8"?>
@@ -168,6 +167,10 @@ module Lithop
           </object>
         </objects>
       XML
+    end
+
+    def last_plate_source_z_min
+      @settings.resolved_z_part_ranges.last.begin
     end
 
     def project_settings

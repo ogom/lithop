@@ -10,7 +10,7 @@ module Lithop
       add_tiles(parser, options)
       add_margins(parser, options)
       add_placement(parser, options)
-      add_adjustments(parser, options)
+      CLIImageAdjustmentOptions.add(parser, options)
       add_thickness(parser, options)
       add_sampling(parser, options)
     end
@@ -39,10 +39,10 @@ module Lithop
       parser.on("--tile-columns COUNT", Integer, "Tile columns for grid layout") do |value|
         options[:tile_columns] = value
       end
-      parser.on("--separate-z-parts", "Put base White, color regions, and top White on separate plates") do
+      parser.on("--separate-z-parts", "Slice the complete model into contiguous Z plates") do
         options[:separate_z_parts] = true
       end
-      parser.on("--color-region-parts COUNT", Integer, "Number of CMYW color-region Z parts (default: 3)") do |value|
+      parser.on("--color-region-parts COUNT", Integer, "Z plate count (1-3); thinnest plate is 0.34 mm") do |value|
         options[:color_region_parts] = value
       end
     end
@@ -72,24 +72,11 @@ module Lithop
     end
     private_class_method :add_placement
 
-    def add_adjustments(parser, options)
-      parser.on("--brightness PERCENT", Float, "Brightness: -100..100 (default: 0)") do |value|
-        options[:brightness] = value
-      end
-      parser.on("--contrast PERCENT", Float, "Contrast: -100..100 (default: 0)") do |value|
-        options[:contrast] = value
-      end
-      parser.on("--saturation PERCENT", Float, "Saturation: -100..100 (default: 0)") do |value|
-        options[:saturation] = value
-      end
-    end
-    private_class_method :add_adjustments
-
     def add_thickness(parser, options)
-      parser.on("--min-thickness MM", Float, "Requested minimum model thickness (default: 1.0)") do |value|
+      parser.on("--min-thickness MM", Float, "Requested minimum model thickness (default: 0.74)") do |value|
         options[:minimum_thickness] = value
       end
-      parser.on("--max-thickness MM", Float, "Requested maximum model thickness (default: 2.14689422)") do |value|
+      parser.on("--max-thickness MM", Float, "Requested maximum model thickness (default: 1.94)") do |value|
         options[:maximum_thickness] = value
       end
     end

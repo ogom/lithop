@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - 2026-10-30
+
+- Changes Z separation to 1–3 contiguous plates with a 0.10 mm first-layer Base White support on each; three-plate output uses eight 0.08 mm CMYW layers, equal source slices, a CMY-free third plate, and only one 0.08 mm Top White layer at the brightest thickness.
+- Adds print color controls for all six CMY stacking orders with YMC as the default, optional Cyan or Magenta mixing into Yellow, and opt-in pale-color suppression.
+- Moves Create, Jobs, and Presets into a GitHub-style top navigation, places the conversion action beside image selection, organizes settings into responsive panes, and adds bulk selection and deletion for recent jobs.
+- Sets the standard maximum thickness to the printable 1.94 mm boundary with 0.01 mm UI increments and updates generated models, calibration stages, documentation, and artifact contracts accordingly.
+
 ## 0.3.0 - 2026-10-20
 
 - Adds a loopback-only Sinatra/ERB/Puma UI with responsive Create, Jobs, and Presets panes, faster immediate JPEG/PNG/SVG input previews, reusable settings, drafts, and engine-rendered result views.

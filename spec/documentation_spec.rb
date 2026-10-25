@@ -79,14 +79,16 @@ RSpec.describe "Human-facing documentation" do
     expect(failures).to be_empty, "broken documentation links:\n#{failures.join("\n")}"
   end
 
-  it "keeps the reader path in the documentation index" do
+  it "keeps the reader path in both documentation indexes" do
     index = DocumentationHelpers::ROOT.join("docs/README.md").read
     expected = %w[
       getting-started.md bambu-studio.md troubleshooting.md artifacts.md
-      config.md command.md color-model.md calibration.md local-ui.md
+      tiling.md config.md command.md color-model.md calibration.md local-ui.md
     ]
 
     expect(expected).to all(satisfy { |target| index.include?("](#{target})") })
+    readme = DocumentationHelpers::ROOT.join("README.md").read
+    expect(expected).to all(satisfy { |target| readme.include?("](docs/#{target})") })
   end
 
   it "keeps one top-level heading and a valid heading hierarchy" do
@@ -97,11 +99,11 @@ RSpec.describe "Human-facing documentation" do
     workflow = DocumentationHelpers::ROOT.join("docs/bambu-studio.md").read
     layer_model = DocumentationHelpers::ROOT.join("docs/color-model.md").read
 
-    expect(workflow).to include("7層の`Cyan -> Magenta -> Yellow -> White`")
+    expect(workflow).to include("既定YMC順の0.08 mm色領域7層")
     expect(workflow).to include("印刷を開始しないでください")
     expect(layer_model).to include("## 現行の積層構造")
-    expect(layer_model).to include("Cyan -> Magenta -> Yellow")
-    expect(layer_model).to include("7層の`Cyan -> Magenta -> Yellow -> White`")
+    expect(layer_model).to include("Yellow -> Magenta -> Cyan")
+    expect(layer_model).to include("0.08 mmの7層`Yellow -> Magenta -> Cyan -> White`")
   end
 
   it "describes cell-based previews without claiming colorimetric prediction" do

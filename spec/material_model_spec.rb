@@ -15,7 +15,7 @@ RSpec.describe Lithop::MaterialModel do
     expect(model.cells.fetch(0).height).to eq(settings.effective_minimum_thickness)
   end
 
-  it "places two White base layers, seven subtractive color layers, and variable White layers" do
+  it "places one White base layer, seven subtractive color layers, and variable White layers" do
     green = [1.0, 0.0, 1.0]
     model = described_class.new(
       cmys: [green, green, green, green],
@@ -24,10 +24,10 @@ RSpec.describe Lithop::MaterialModel do
     )
 
     expect(model.cells.fetch(0).materials).to eq(
-      %i[white white cyan cyan cyan yellow yellow yellow yellow white white white white]
+      %i[white yellow yellow yellow yellow cyan cyan cyan white white white white white white]
     )
     expect(model.z_boundaries).to eq(
-      [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.04, 1.08, 1.12]
+      [0.0, 0.1, 0.18, 0.26, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.82, 0.9, 0.98, 1.06, 1.14]
     )
   end
 
@@ -39,7 +39,7 @@ RSpec.describe Lithop::MaterialModel do
       settings:
     )
 
-    expect(model.cells.fetch(0).materials.slice(2, 7).uniq).to contain_exactly(:cyan, :magenta)
+    expect(model.cells.fetch(0).materials.slice(1, 7).uniq).to contain_exactly(:cyan, :magenta)
     expect(model.cells.fetch(0).materials.count(:white)).to be >= 3
   end
 
@@ -49,8 +49,8 @@ RSpec.describe Lithop::MaterialModel do
         width: 1.0,
         height: 1.0,
         pixel_size: 1.0,
-        minimum_thickness: 0.65,
-        maximum_thickness: 0.75
+        minimum_thickness: 0.67,
+        maximum_thickness: 0.73
       )
     end.to raise_error(Lithop::ConfigurationError, /no printable layer boundary/)
   end
@@ -72,7 +72,7 @@ RSpec.describe Lithop::MaterialModel do
     expect(model.cells.fetch(0).recipe.layer_count).to eq(4)
   end
 
-  it "builds the reference two-layer base, seven-layer color region, and upper White region" do
+  it "builds the reference one-layer base, seven-layer color region, and upper White region" do
     reference = Lithop::Settings.new(
       layout_profile: "standard",
       width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
@@ -84,8 +84,10 @@ RSpec.describe Lithop::MaterialModel do
     )
 
     expect(model.cells.fetch(0).materials).to eq(
-      %i[white white cyan cyan cyan cyan cyan cyan cyan white]
+      %i[white cyan cyan cyan cyan cyan cyan cyan white white white white]
     )
-    expect(model.z_boundaries).to eq([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    expect(model.z_boundaries).to eq(
+      [0.0, 0.1, 0.18, 0.26, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.82, 0.9, 0.98]
+    )
   end
 end

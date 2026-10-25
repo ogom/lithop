@@ -64,15 +64,6 @@ module Lithop
     def color_region_start = base_white_thickness
     def color_region_end = color_end
 
-    def color_region_layer_ranges(part_count)
-      size, remainder = color_layer_count.divmod(part_count)
-      start = base_white_layers
-      Array.new(part_count) do |index|
-        finish = start + size + (index < remainder ? 1 : 0)
-        (start...finish).tap { start = finish }
-      end
-    end
-
     def materials_for(recipe_layers, height)
       top_white_layers = top_white_layer_count(height, pigment_layers: recipe_layers.length)
       [*Array.new(base_white_layers, :white), *recipe_layers, *Array.new(top_white_layers, :white)]

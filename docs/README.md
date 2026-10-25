@@ -1,10 +1,11 @@
 # Lithopドキュメント
 
-Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトファン）3MFと、White参照STLを生成するローカルCLI／ブラウザUIです。画像を外部へ送信せず、入力画像自体を生成ジョブへコピーしません。
+Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトファン）3MFと、White参照STLを生成するローカルCLI／ブラウザUIです。既定では単一プレートの3MFを生成し、必要に応じてXYタイル分割とZプレート分割を利用できます。画像を外部へ送信せず、入力画像自体を完了済みジョブへコピーしません。
 
 ## 安全と現在の検証範囲
 
-- 標準は0.2 mmノズル、White下地2層、CMYW色領域7層、連続高のWhite上面を使います。
+- 標準は0.2 mmノズル、White下地1層0.10 mm、0.08 mmのCMYW色領域7層、0.08 mmの連続高White上面を使います。
+- Z分割時は各プレートの第1層をBase White 0.10 mm、CMYW色領域8層とTop Whiteを0.08 mm積層ピッチにします。3分割時のZプレート3はBase White 3層とTop White 1層以上で、最薄部をWhite合計4層・0.34 mmにします。
 - Bambu Studioで単一プレートとWhite/Cyan/Magenta/Yellowの割り当て復元を確認済みです。0.2 mmノズルで実機印刷済みなのは細線評価片です。現行140 × 104 mmカラーチャートはBambu Studioで形状を確認済みですが、実機印刷は未実施です。
 - 現行カラーチャートの120レシピとWhite厚み8段階は数値測色していません。
 - 数値測色は必須にしておらず、入力画像やプレビューとの測色的一致は保証しません。
@@ -24,7 +25,7 @@ Lithopは、JPEG、PNG、SVGからCMYW材料のカラーLithophane（リトフ�
 ## 仕様を調べる
 
 - [生成物と記録](artifacts.md) — ジョブ、全成果物、プレビュー、`settings.json`、`manifest.json`
-- [3MFタイル分割とZ分割](tiling.md) — 指定枚数のXY分割、組み立て座標、4プレートのZ分割
+- [3MFタイル分割とZ分割](tiling.md) — 指定枚数のXY分割、組み立て座標、強度調整したBase White付きの連続Z分割
 - [生成オプションと設定ファイル](config.md) — 設定の優先順位、入力JSON、既定値、検証規則
 - [コマンドリファレンス](command.md) — 構文、全オプション、終了ステータス
 - [CMYWの色モデルと積層構造](color-model.md) — 材料、減法混色、White厚み、3MF構造

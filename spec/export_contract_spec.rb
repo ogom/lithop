@@ -8,27 +8,27 @@ require "zip"
 RSpec.describe "export artifact contract" do
   let(:binary_digests) do
     {
-      "PRINT_README.md" => "a006b522adac73b505f048fc617cdabbfab7314fc3401d405ab76177f6b61402",
-      "cmyk_white.stl" => "00457d950383f8e76ea3eee0591ee76bc3ac1339dd0bac9b6e42f4d87ba63fed"
+      "PRINT_README.md" => "09ea28717af95187615cc261d965512e0b677745abe454423c052b40a5a056c2",
+      "cmyk_white.stl" => "a454bc5957122c39c1e84ba3f391f13e8818731b80d92a2d6ceb1318ef6fe855"
     }
   end
   let(:preview_digests) do
     {
-      "preview.png" => "94ea0e744ef0604cad2e079968f47a18e5090f6a791610672ec455bef716c775",
-      "transmission.png" => "4895125682cdf764b1e35a23d67e4e5b2c46ef7465296390da1cd6f73188aba7",
-      "thickness.png" => "577f694540522ff36e8c62fc6cbf1b7a3caa0c97ce1c7ba1ea57ceee9b9463e4",
-      "cyan-mask.png" => "90c7c46516e6ba1db4c4a66f9dc8328edcbfa617a10d7c95f66daf2d79aae002",
-      "magenta-mask.png" => "9e57e1386a3254ea1a550c659997f550d3f0ae743d7f98c55e7c3c7bf67f10f3",
-      "yellow-mask.png" => "73d03c6e3d4d655d31bee8463fc777a681a23d5733232fa8671a32437270aaaa",
-      "white-mask.png" => "4bdf8079799c85fc3fe31323208745348156269b8968ebaa89874ed46aa5f608"
+      "preview.png" => "d0a43958a12e89ac7c7a0dabd0402f60c1cd7d2b00ce087c257d7823c89d5603",
+      "transmission.png" => "c629a96f796703dec3c64a725f8c77552ef3f8fb7a7b673664a30ae07cf15310",
+      "thickness.png" => "97bbb11276b5a9610105a39a4d194c0e9be58b3567ded38e72aa0a2f734801b4",
+      "cyan-mask.png" => "a52ef9aeb6c771d9b12eb5247c1f5f7c77c54c321d12ad44cc584c5865886c78",
+      "magenta-mask.png" => "cf8e73d8e8b46bbb4eee01b152f47e71dfa8b6f2282f68765b88d2171a23b902",
+      "yellow-mask.png" => "042b8434a6482980f087efb39ff8cc8296ecbef0b5e9caf79196975856da2940",
+      "white-mask.png" => "97e02e2bdcda125da1c78257492f3ceb0145ba5b39f5c60d5df43fce3567bf50"
     }
   end
   let(:three_mf_digests) do
     {
-      "3D/3dmodel.model" => "0dae843bbab4af1e1052e58b274653e0252c8f4390a7874533069dafdf821ea8",
-      "Metadata/layer_config_ranges.xml" => "a95116fadd7522bf5d6d744d3fad15b7014fb28c0553e364cc2b673f5903e42a",
-      "Metadata/model_settings.config" => "a7708caa8f6338c088b6cc50211499c94cc37ca5b7e2fdae6b1297187cee8572",
-      "Metadata/project_settings.config" => "9f974735b67357579d32abfe31afc5254e70b9eaf999167c0caea7eb883e3e21",
+      "3D/3dmodel.model" => "826f0a1c68f0851514ca512f1dcabe2b36174f1d956bf132e312aa2f81a8fdce",
+      "Metadata/layer_config_ranges.xml" => "563ecd308a1769189a76e42f02f3632b93d932929b43f01f0343bd7bf520b885",
+      "Metadata/model_settings.config" => "89b7fb93e180379f3a845e2a957b2308d2f5a144bf2178b2fca2f41bf65413d6",
+      "Metadata/project_settings.config" => "623dd63f4dad5b8e496b0404257260c0b42d5097e633c8a921df84fae1da555c",
       "[Content_Types].xml" => "70272308f051681b28d6ec150ef3b3a2d2f94e2a6f3ba55da935bdca965c439a",
       "_rels/.rels" => "fe78c4cf56b0257a22e9883fa3e3fbfe5cea998fd18e1254f6eb28c3f34641c7"
     }
@@ -62,9 +62,9 @@ RSpec.describe "export artifact contract" do
       expect(Digest::SHA256.hexdigest(corrected.write_to_memory))
         .to eq("30112800eb0c764234fbe90adec3456023df308fb0f231ba3add7ceb8fff19aa")
       expect(normalized_json_digest(result.path, "settings.json", "input_path"))
-        .to eq("361f1cbb8c0d6ecbcdeb0cee0e2645e1ffba0605f36d9785c52c08a7c3bb02af")
+        .to eq("545eb15d4ec1a20a972677bba61a62679e58565a65fc807ec8b185d1b3cf1fc4")
       expect(normalized_json_digest(result.path, "manifest.json", "job_id"))
-        .to eq("b055151349d8d8bfc869ddaf30eb3715aedd7e251f0c0944f35bcfa6ddc4b15d")
+        .to eq("3baee682ddd829402b3d6452666c7cc09bbe7438e892d28587cf67624aad3058")
       expect(archive_digests(result.path)).to eq(three_mf_digests)
     end
   end

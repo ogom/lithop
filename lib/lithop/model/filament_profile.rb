@@ -62,12 +62,12 @@ module Lithop
 
     def default = BAMBU_LAB_PLA_CMYK
 
-    def display_sample(rgb)
-      cmy, density = MaterialDisplayMap.call(rgb)
+    def display_sample(rgb, mixtures: true)
+      cmy, density = MaterialDisplayMap.call(rgb, mixtures:)
       DisplaySample.new(cmy:, density:) if cmy
     end
 
-    def display_cmy(rgb) = display_sample(rgb)&.cmy
+    def display_cmy(rgb, mixtures: true) = display_sample(rgb, mixtures:)&.cmy
 
     def validate!(profile)
       channels = profile.materials.map(&:channel)

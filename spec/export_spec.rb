@@ -38,7 +38,7 @@ RSpec.describe Lithop::Export do
       expect(manifest.dig("print_settings", "nozzle_diameter_mm")).to eq(0.4)
       expect(manifest.dig("color_model", "id")).to eq("cmy")
       expect(manifest.dig("color_model", "color_layer_count")).to eq(7)
-      expect(manifest.dig("color_model", "pigment_order")).to eq(%w[cyan magenta yellow])
+      expect(manifest.dig("color_model", "pigment_order")).to eq(%w[yellow magenta cyan])
       expect(manifest.dig("color_model", "used_materials")).to eq(%w[Cyan Magenta Yellow White])
       expect(manifest.dig("color_model", "unused_materials")).to be_empty
       expect(manifest.dig("color_model", "bambu_studio_material_assignments_encoded")).to be(true)
@@ -164,9 +164,11 @@ RSpec.describe Lithop::Export do
       tile_files.each do |name|
         report = Lithop::ReferenceThreeMF.new(File.join(result.path, name)).call
         part_names = report.fetch(:parts).map { |part| part.fetch(:name) }
-        expect(part_names).to include("Top White")
-        expect(part_names.grep(/ Base White\z/).length).to eq(3)
-        expect(part_names.grep(/\AColor region [123] /).map { |part_name| part_name.split.fetch(2) }.uniq)
+        expect(part_names).to include("Z plate 3 Top White")
+        expect(part_names.grep(/ Base White\z/)).to eq(
+          ["Z plate 1 Base White", "Z plate 2 Base White", "Z plate 3 Base White"]
+        )
+        expect(part_names.grep(/\AZ plate [123] /).map { |part_name| part_name.split.fetch(2) }.uniq)
           .to eq(%w[1 2 3])
         mesh_objects = report.fetch(:models).flat_map { |model| model.fetch(:objects) }
                              .select { |object| object.fetch(:triangles).positive? }
@@ -178,7 +180,7 @@ RSpec.describe Lithop::Export do
     end
   end
 
-  it "adds Base White to each CMYW Z region and writes four Bambu Studio plates" do
+  it "writes contiguous Z plates over strength-adjusted Base White supports" do
     Dir.mktmpdir do |directory|
       input = File.join(directory, "cyan.svg")
       File.write(
@@ -201,59 +203,69 @@ RSpec.describe Lithop::Export do
 
       expect(parts.map { |part| part.fetch(:name) }).to eq(
         [
-          "Color region 1 Base White", "Color region 1 White", "Color region 1 Cyan",
-          "Color region 2 Base White", "Color region 2 White", "Color region 2 Cyan",
-          "Color region 3 Base White", "Color region 3 White", "Color region 3 Cyan",
-          "Top White"
+          "Z plate 1 Base White", "Z plate 1 White", "Z plate 1 Cyan",
+          "Z plate 2 Base White", "Z plate 2 White", "Z plate 2 Cyan",
+          "Z plate 3 Base White", "Z plate 3 Top White"
         ]
       )
-      expect(parts.map { |part| part.fetch(:extruder) }).to eq([4, 4, 1, 4, 4, 1, 4, 4, 1, 4])
-      expect(result.object_count).to eq(10)
+      expect(parts.map { |part| part.fetch(:extruder) }).to eq([4, 4, 1, 4, 4, 1, 4, 4])
+      expect(result.object_count).to eq(8)
       expect(report.fetch(:plates)).to eq(
         [
-          { id: 1, name: "Color region 1", object_ids: ["4"] },
-          { id: 2, name: "Color region 2", object_ids: ["8"] },
-          { id: 3, name: "Color region 3", object_ids: ["12"] },
-          { id: 4, name: "Top White", object_ids: ["14"] }
+          { id: 1, name: "Z plate 1", object_ids: ["4"] },
+          { id: 2, name: "Z plate 2", object_ids: ["8"] },
+          { id: 3, name: "Z plate 3", object_ids: ["11"] }
         ]
       )
       assemblies = objects.values.select { |object| object.fetch(:components).positive? }
       expect(assemblies.map { |object| object.fetch(:component_refs).first.fetch(:transform)&.last })
-        .to eq([0.1, 0.1, 0.1, 0.05])
-      expect(objects.fetch(parts.fetch(0).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
-      expect(objects.fetch(parts.fetch(1).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.15, 0.15])
-      expect(objects.fetch(parts.fetch(4).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
-      expect(objects.fetch(parts.fetch(7).fetch(:id)).values_at(:minimum, :maximum).map(&:last)).to eq([-0.1, 0.1])
-      expect(objects.fetch(parts.fetch(9).fetch(:id)).fetch(:minimum).last).to eq(-0.05)
+        .to eq([0.05, 0.05, 0.13])
+      expect(assemblies.last.fetch(:component_refs).map { |component| component.fetch(:transform)&.last })
+        .to eq([0.13, 0.3])
+      [0, 3].each do |index|
+        expect(objects.fetch(parts.fetch(index).fetch(:id)).values_at(:minimum, :maximum).map(&:last))
+          .to eq([-0.05, 0.05])
+      end
+      expect(objects.fetch(parts.fetch(6).fetch(:id)).values_at(:minimum, :maximum).map(&:last))
+        .to eq([-0.13, 0.13])
       expect(manifest.dig("color_model", "z_part_separation", "enabled")).to be(true)
+      expect(manifest.dig("color_model", "color_layer_count")).to eq(8)
+      expect(manifest.dig("color_model", "z_part_separation")).to include(
+        "requested_parts" => 3, "resolved_parts" => 3,
+        "minimum_source_plate_thickness" => 0.32, "minimum_plate_thickness" => 0.34,
+        "adjusted_minimum_total_thickness" => 1.18
+      )
+      expect(manifest.dig("color_model", "z_part_separation", "base_white")).to include(
+        "included" => true, "layers_per_plate" => [1, 1, 3],
+        "thickness_per_plate" => [0.1, 0.1, 0.26], "repeated_per_plate" => true
+      )
+      expect(manifest.dig("color_model", "z_part_separation", "source_base_white"))
+        .to include("included" => false, "z_min" => 0.0, "z_max" => 0.1)
       expect(manifest.dig("color_model", "z_part_separation", "color_regions")).to eq(
         [
-          { "id" => "color_region_1", "layer_start" => 1, "layer_end" => 3, "z_min" => 0.2, "z_max" => 0.5 },
-          { "id" => "color_region_2", "layer_start" => 4, "layer_end" => 5, "z_min" => 0.5, "z_max" => 0.7 },
-          { "id" => "color_region_3", "layer_start" => 6, "layer_end" => 7, "z_min" => 0.7, "z_max" => 0.9 }
+          { "id" => "z_part_1", "z_min" => 0.1, "z_max" => 0.42 },
+          { "id" => "z_part_2", "z_min" => 0.42, "z_max" => 0.74 }
         ]
       )
       expect(manifest.dig("color_model", "z_part_separation", "plates")).to eq(
         [
           {
-            "plate_id" => 1, "name" => "Color region 1",
-            "source_z_min" => 0.0, "source_z_max" => 0.5,
-            "build_z_min" => 0.0, "build_z_max" => 0.5
+            "plate_id" => 1, "name" => "Z plate 1",
+            "source_z_min" => 0.1, "source_z_max" => 0.42,
+            "build_z_min" => 0.0, "build_z_max" => 0.42, "minimum_build_thickness" => 0.42,
+            "base_white_layers" => 1, "base_white_thickness" => 0.1
           },
           {
-            "plate_id" => 2, "name" => "Color region 2",
-            "source_z_min" => 0.0, "source_z_max" => 0.7,
-            "build_z_min" => 0.0, "build_z_max" => 0.7
+            "plate_id" => 2, "name" => "Z plate 2",
+            "source_z_min" => 0.42, "source_z_max" => 0.74,
+            "build_z_min" => 0.0, "build_z_max" => 0.42, "minimum_build_thickness" => 0.42,
+            "base_white_layers" => 1, "base_white_thickness" => 0.1
           },
           {
-            "plate_id" => 3, "name" => "Color region 3",
-            "source_z_min" => 0.0, "source_z_max" => 0.9,
-            "build_z_min" => 0.0, "build_z_max" => 0.9
-          },
-          {
-            "plate_id" => 4, "name" => "Top White",
-            "source_z_min" => 0.9, "source_z_max" => 2.14689422,
-            "build_z_min" => 0.0, "build_z_max" => 1.24689422
+            "plate_id" => 3, "name" => "Z plate 3",
+            "source_z_min" => 0.74, "source_z_max" => 1.94,
+            "build_z_min" => 0.0, "build_z_max" => 1.46, "minimum_build_thickness" => 0.34,
+            "base_white_layers" => 3, "base_white_thickness" => 0.26
           }
         ]
       )
@@ -267,14 +279,14 @@ RSpec.describe Lithop::Export do
           '<metadata name="BambuStudio:3mfVersion">1</metadata>',
           "<metadata name=\"lithop:Application\" preserve=\"1\">Lithop #{Lithop::VERSION}</metadata>"
         )
-        expect(model.scan(%r{p:path="/3D/Objects/object_\d+\.model"}).length).to eq(10)
-        expect(model.scan('printable="1"').length).to eq(4)
+        expect(model.scan(%r{p:path="/3D/Objects/object_\d+\.model"}).length).to eq(8)
+        expect(model.scan('printable="1"').length).to eq(3)
         expect(archive.map(&:name)).to include(
           "3D/_rels/3dmodel.model.rels",
-          *Array.new(4) { |index| "3D/Objects/object_#{index + 1}.model" }
+          *Array.new(3) { |index| "3D/Objects/object_#{index + 1}.model" }
         )
         relationships = archive.read("3D/_rels/3dmodel.model.rels")
-        expect(relationships.scan(%r{Target="/3D/Objects/object_\d+\.model"}).length).to eq(4)
+        expect(relationships.scan(%r{Target="/3D/Objects/object_\d+\.model"}).length).to eq(3)
         submodel = archive.read("3D/Objects/object_2.model")
         expect(submodel).to include(
           'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06"',
@@ -283,13 +295,16 @@ RSpec.describe Lithop::Export do
         expect(submodel.scan("p:UUID=")).not_to be_empty
         model_settings = archive.read("Metadata/model_settings.config")
         expect(model_settings.scan(%r{<metadata key="identify_id" value="(\d+)"/>}).flatten)
-          .to eq(%w[218 253 276 287])
-        expect(model_settings.scan(/subtype="normal_part" uuid="[^"]+"/).length).to eq(10)
+          .to eq(%w[218 253 276])
+        expect(model_settings.scan(/subtype="normal_part" uuid="[^"]+"/).length).to eq(8)
         expect(model_settings.scan(/<assemble_item object_id="(\d+)" instance_id="0"/).flatten)
-          .to eq(%w[4 8 12 14])
-        expect(model_settings.scan(/<assemble_item object_id="\d+" volume_id="\d+"/).length).to eq(10)
+          .to eq(%w[4 8 11])
+        expect(model_settings.scan(/<assemble_item object_id="\d+" volume_id="\d+"/).length).to eq(8)
         ranges = archive.read("Metadata/layer_config_ranges.xml")
-        expect(ranges).to include('<object id="4">', 'min_z="0.1" max_z="1.24689422"')
+        expect(ranges).to include(
+          '<object id="3">', 'min_z="0.26" max_z="1.46"',
+          '<option opt_key="layer_height">0.08</option>'
+        )
       end
     end
   end
@@ -505,8 +520,8 @@ RSpec.describe Lithop::Export do
       expect(manifest.dig("color_model", "color_layer_count")).to eq(5)
       expect(manifest.dig("color_model", "pigment_order")).to eq(%w[yellow magenta cyan])
       expect(manifest.dig("color_model", "color_layer_sequence")).to eq(%w[yellow magenta cyan white])
-      expect(manifest.dig("color_model", "minimum_top_white_layers")).to eq(0)
-      expect(manifest.dig("color_model", "thickness_mm", "minimum_total")).to eq(1.0)
+      expect(manifest.dig("color_model", "minimum_top_white_layers")).to eq(1)
+      expect(manifest.dig("color_model", "thickness_mm", "minimum_total")).to eq(0.68)
       expect(manifest.dig("color_model", "recipe_summaries")).to include(
         hash_including("counts" => { "cyan" => 1, "magenta" => 1, "yellow" => 1, "white" => 2 })
       )
@@ -532,7 +547,7 @@ RSpec.describe Lithop::Export do
       report = Lithop::ReferenceThreeMF.new(File.join(result.path, "lithop.3mf")).call
 
       expect(manifest.fetch("dimensions_mm")).to eq(
-        "width" => 2.0, "height" => 2.0, "depth" => 2.14689422
+        "width" => 2.0, "height" => 2.0, "depth" => 1.94
       )
       expect(manifest.dig("color_model", "layout_profile")).to eq("standard")
       assembly_id = report.fetch(:models).flat_map { |model| model.fetch(:objects) }
@@ -587,9 +602,9 @@ RSpec.describe Lithop::Export do
       expect(recorded_settings.fetch("calibration_profile_path")).to eq(profile_path)
       expect(File).to exist(File.join(result.path, "calibration-profile.json"))
       expect(readme).to include("Measured calibration profile: measured-export")
-      expect(stl_maximum_z).to be_within(1e-6).of(1.32)
-      expect(white_object.fetch(:maximum).fetch(2)).to be_within(1e-6).of(1.32)
-      expect(thickness.getpoint(0, 0).first).to eq(71.0)
+      expect(stl_maximum_z).to be_within(1e-6).of(1.06)
+      expect(white_object.fetch(:maximum).fetch(2)).to be_within(1e-6).of(1.06)
+      expect(thickness.getpoint(0, 0).first).to eq(68.0)
     end
   end
 end

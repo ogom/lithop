@@ -36,10 +36,10 @@ module Lithop
     def calibration(options, out)
       OptionParser.new do |parser|
         parser.banner = "Usage: lithop calibrate [options]"
-        parser.on("--min-thickness MM", Float, "Requested minimum thickness (default: 1.0)") do |value|
+        parser.on("--min-thickness MM", Float, "Requested minimum thickness (default: 0.74)") do |value|
           options[:minimum_thickness] = value
         end
-        parser.on("--max-thickness MM", Float, "Requested maximum thickness (default: 2.14689422)") do |value|
+        parser.on("--max-thickness MM", Float, "Requested maximum thickness (default: 1.94)") do |value|
           options[:maximum_thickness] = value
         end
         add_print_settings(parser, options)
@@ -74,10 +74,10 @@ module Lithop
       parser.on("--color-model MODEL", "Color model (default: cmy)") do |value|
         options[:color_model] = value.downcase
       end
-      parser.on("--color-layer-count COUNT", Integer, "CMY/W color layers: 4/5/7 (default: 7)") do |value|
+      parser.on("--color-layer-count COUNT", Integer, "CMY/W color layers: 4/5/7/8 (default: 7; Z split: 8)") do |value|
         options[:color_layer_count] = value
       end
-      parser.on("--pigment-order LIST", "Pigment order, e.g. cyan,magenta,yellow") do |value|
+      parser.on("--pigment-order LIST", "Pigment order, e.g. yellow,magenta,cyan (default: YMC)") do |value|
         options[:pigment_order] = value
       end
     end

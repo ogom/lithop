@@ -10,20 +10,20 @@ Lithopは、画像からカラーLithophane（リトファン）の3MFとWhite�
 - JPEG、PNG、SVG（librsvg）、ICCプロファイルを扱えるlibvips
 - 印刷する場合はBambu Studio、AMS対応プリンタ、必要なCMYWフィラメント
 
-標準構造は0.2 mmノズル、White下地2層、CMYW色領域7層、連続高のWhite上面を使います。Lithopはスライスや印刷開始を行いません。
+標準構造は0.2 mmノズル、White下地1層0.10 mm、0.08 mmのCMYW色領域7層、0.08 mmの連続高White上面を使います。Lithopはスライスや印刷開始を行いません。
 
 ## インストール
 
-0.3.0を使う場合は、libvips、Rust、バージョンを指定したLithopをインストールします。
+0.4.0を使う場合は、libvips、Rust、バージョンを指定したLithopをインストールします。
 
 ```sh
 brew install vips rust
-gem install lithop -v 0.3.0
+gem install lithop -v 0.4.0
 lithop --version
 lithop doctor
 ```
 
-`lithop --version`が`0.3.0`を表示することを確認します。
+`lithop --version`が`0.4.0`を表示することを確認します。
 `lithop doctor`では`backend`が`rust`、`extension_version`がLithopと同じバージョンであることを確認します。
 
 ソースチェックアウトから実行する場合は、代わりに次を実行します。
@@ -65,6 +65,12 @@ bundle exec lithop path/to/image.jpeg
 
 CLIで指定した値は`config/settings.json`より優先されます。ノズル径は生成記録に保存されますが、形状やレイヤー高さを自動変更しないため、Bambu Studioにも同じ条件を設定してください。
 
+Yellowの透過が強い材料・光源では、Yellow被覆量の一部をCyanまたはMagentaへ置き換えられます。初期値は0%で無効です。まずカラーチャートで少量から比較してください。
+
+```sh
+bundle exec lithop examples/cmy-color-chart.svg --yellow-mix-color cyan --yellow-mix-percent 20
+```
+
 ## 入力画像の扱い
 
 対応形式はJPEG、PNG、非圧縮SVGです。LithopはEXIF Orientationを適用し、透過部分をWhiteへ合成し、埋め込みICCプロファイルを使ってsRGBへ変換します。SVGは96 DPIを基準に、厚さ格子と色格子を満たす解像度へメモリ内で描画します。PNGの中間ファイルは作りません。SVGファイルの上限は15,000,000バイト（15 MB）です。既定では指定した縦横比へ中央クロップします。構図は`--crop-position-x`、`--crop-position-y`、`--crop-scale`で調整でき、`--image-fit contain`では画像全体をWhite領域内へ収められます。
@@ -75,7 +81,7 @@ SVGは正の`width`・`height`（単位なし、`px`、`mm`、`in`）または`v
 
 上部Whiteの高さは、材料表示色と同梱カラーチャートの配合色では図中の明暗値を使い、それ以外の入力色ではRec.601輝度を使います。このため、カラーチャートではYellowを含む全色列の同じ明暗行が同じWhite高さになります。
 
-入力画像はその場で読み取ります。変更、アップロード、`build/`へのコピー、削除は行いません。
+CLIは入力画像をその場で読み取り、変更、アップロード、削除を行わず、完了済みの`build/<job_id>/`へコピーしません。ローカルUIはプレビューと別プロセスでの変換に必要な間だけ`build/.previews/`と`build/.web/`へ一時保存し、処理後に回収します。詳しくは[ローカルブラウザUI](local-ui.md#一時ファイルとローカル性)を参照してください。
 
 ## 結果を確認する
 
@@ -90,7 +96,7 @@ SVGは正の`width`・`height`（単位なし、`px`、`mm`、`in`）または`v
 
 確認後、`lithop.3mf`をBambu Studioへモデルとして読み込みます。材料部品を個別に移動、整列、拡大縮小、結合しないでください。
 
-タイル分割またはZ分割を使う場合は、[3MFタイル分割とZ分割](tiling.md)に従って各3MF、組み立て位置、Bambu Studioのプレートを確認してください。
+タイル分割またはZ分割を使う場合は、[3MFタイル分割とZ分割](tiling.md)に従って各3MF、組み立て位置、Bambu Studioのプレートを確認してください。Z分割では色領域が8層、各プレートの第1層が0.10 mm、それ以降が0.08 mm積層ピッチとなり、3分割のZプレート3にはCMYを含みません。Zプレート3はBase White 3層とTop White 1層以上で、最薄部をWhite合計4層・0.34 mmにします。
 
 ## 生成物を削除する
 

@@ -198,9 +198,8 @@ module Lithop
 
     def assembly_name(region)
       return "Lithop CMYW lithophane" unless region
-      return "Top White" if region == "top_white"
 
-      region.sub("color_region_", "Color region ")
+      region.sub("z_part_", "Z plate ")
     end
 
     def write_assembly(assembly, submodel_index = nil)
@@ -264,9 +263,7 @@ module Lithop
     end
 
     def plate_index(assembly)
-      return 3 if assembly.region == "top_white"
-
-      assembly.region.delete_prefix("color_region_").to_i - 1
+      assembly.region.delete_prefix("z_part_").to_i - 1
     end
 
     def model_header

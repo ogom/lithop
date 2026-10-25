@@ -82,22 +82,61 @@ RSpec.describe Lithop::ImagePipeline do
     end
   end
 
-  it "removes low-density non-Yellow chroma noise from reference White" do
+  it "does not promote ordinary pale Yellow to a full material-display channel" do
     reference = Lithop::Settings.new(
       layout_profile: "standard",
       width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
     )
 
     Dir.mktmpdir do |directory|
-      path = File.join(directory, "white-noise.png")
-      Vips::Image.new_from_memory(([253, 250, 253] * 4).pack("C*"), 2, 2, 3, :uchar).pngsave(path)
-      result = described_class.new(reference).call(path)
+      recipes = [[254, 253, 222], [253, 253, 228]].map do |rgb|
+        path = write_solid(directory, "pale-yellow-#{rgb.join("-")}.png", rgb)
+        result = described_class.new(reference).call(path)
+        Lithop::Palette.new.nearest(result.color_cells.fetch(0))
+      end
 
-      expect(result.color_cells).to eq([[0.0, 0.0, 0.0]])
+      expect(recipes.map { |recipe| [recipe.cyan, recipe.magenta, recipe.yellow, recipe.white] })
+        .to eq([[0, 0, 1, 6], [0, 0, 1, 6]])
     end
   end
 
-  it "preserves five-percent Cyan and Magenta chart colors" do
+  it "removes very pale Cyan, Magenta, and Yellow when pale-color suppression is enabled" do
+    reference = Lithop::Settings.new(
+      layout_profile: "standard", suppress_pale_colors: true,
+      width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
+    )
+
+    Dir.mktmpdir do |directory|
+      colors = { cyan: [230, 255, 255], magenta: [255, 230, 255], yellow: [255, 255, 230] }
+      cells = colors.map do |name, rgb|
+        path = write_solid(directory, "pale-#{name}.png", rgb)
+        described_class.new(reference).call(path).color_cells.fetch(0)
+      end
+
+      expect(cells).to all(eq([0.0, 0.0, 0.0]))
+    end
+  end
+
+  it "preserves very pale Cyan, Magenta, and Yellow when pale-color suppression is disabled" do
+    reference = Lithop::Settings.new(
+      layout_profile: "standard",
+      width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
+    )
+
+    Dir.mktmpdir do |directory|
+      colors = { cyan: [230, 255, 255], magenta: [255, 230, 255], yellow: [255, 255, 230] }
+      recipes = colors.map do |name, rgb|
+        path = write_solid(directory, "pale-#{name}.png", rgb)
+        result = described_class.new(reference).call(path)
+        Lithop::Palette.new.nearest(result.color_cells.fetch(0))
+      end
+
+      expect(recipes.map { |recipe| [recipe.cyan, recipe.magenta, recipe.yellow, recipe.white] })
+        .to eq([[1, 0, 0, 6], [0, 1, 0, 6], [0, 0, 1, 6]])
+    end
+  end
+
+  it "preserves five-percent Cyan and Magenta in marked material-display SVGs" do
     reference = Lithop::Settings.new(
       layout_profile: "standard",
       width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
@@ -105,8 +144,7 @@ RSpec.describe Lithop::ImagePipeline do
 
     Dir.mktmpdir do |directory|
       { cyan: [242, 249, 253], magenta: [254, 242, 249] }.each do |name, rgb|
-        path = File.join(directory, "#{name}-five-percent.png")
-        Vips::Image.new_from_memory((rgb * 4).pack("C*"), 2, 2, 3, :uchar).pngsave(path)
+        path = write_solid_svg(directory, "#{name}-five-percent.svg", rgb, material_display: true)
         result = described_class.new(reference).call(path)
 
         expect(result.color_cells.fetch(0)).not_to eq([0.0, 0.0, 0.0])
@@ -203,7 +241,7 @@ RSpec.describe Lithop::ImagePipeline do
     end
   end
 
-  it "maps the filament display colors to pure material channels" do
+  it "maps filament display colors in marked SVGs to pure material channels" do
     Dir.mktmpdir do |directory|
       colors = {
         cyan: [[0, 134, 214], [1.0, 0.0, 0.0]],
@@ -212,12 +250,33 @@ RSpec.describe Lithop::ImagePipeline do
       }
 
       colors.each do |name, (rgb, expected_cmy)|
-        result = described_class.new(settings).call(write_solid(directory, "#{name}.png", rgb))
+        path = write_solid_svg(directory, "#{name}.svg", rgb, material_display: true)
+        result = described_class.new(settings).call(path)
         recipe = Lithop::Palette.new.nearest(result.cmys.first)
 
         expect(result.cmys.uniq).to eq([expected_cmy])
         expect(result.cmy_densities.uniq).to eq([1.0])
         expect(recipe.layers).to eq([name] * 7)
+      end
+    end
+  end
+
+  it "replaces the selected percentage of Yellow with Cyan or Magenta" do
+    Dir.mktmpdir do |directory|
+      path = write_solid_svg(directory, "yellow.svg", [252, 227, 0], material_display: true)
+
+      { "cyan" => [0.2, 0.0, 0.8], "magenta" => [0.0, 0.2, 0.8] }.each do |color, expected|
+        mixed_settings = Lithop::Settings.new(
+          width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1,
+          yellow_mix_color: color, yellow_mix_percent: 20.0
+        )
+        result = described_class.new(mixed_settings).call(path)
+        recipe = Lithop::Palette.new.nearest(result.color_cells.fetch(0))
+
+        expect(result.cmys.uniq).to eq([expected])
+        expect(result.white_densities.uniq).to eq([1.0])
+        expected_layers = color == "cyan" ? [1, 0, 6, 0] : [0, 1, 6, 0]
+        expect([recipe.cyan, recipe.magenta, recipe.yellow, recipe.white]).to eq(expected_layers)
       end
     end
   end
@@ -463,6 +522,19 @@ RSpec.describe Lithop::ImagePipeline do
     path = File.join(directory, name)
     options = profile ? { profile: } : {}
     Vips::Image.new_from_memory((rgb * 4).pack("C*"), 2, 2, 3, :uchar).pngsave(path, **options)
+    path
+  end
+
+  def write_solid_svg(directory, name, rgb, material_display: false)
+    path = File.join(directory, name)
+    marker = material_display ? ' data-lithop-color-encoding="material-display"' : ""
+    red, green, blue = rgb
+    color = format("#%<red>02X%<green>02X%<blue>02X", red:, green:, blue:)
+    File.write(
+      path,
+      "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 2 2\"#{marker}>" \
+      "<rect width=\"2\" height=\"2\" fill=\"#{color}\"/></svg>"
+    )
     path
   end
 

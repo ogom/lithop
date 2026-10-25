@@ -37,7 +37,7 @@ Lithopは生成中のファイルを一時ディレクトリへ書き、すべ�
 
 標準ジョブは単一プレートと非一様レイヤー情報を持つ`lithop.3mf`を出力します。未使用のCyan、Magenta、Yellowは3MFのメッシュから省略されるため、材料部品は1〜4個です。Whiteは必ず含まれます。`cmyk_white.stl`は比較用で、CMYWの材料分離情報を持ちません。
 
-XYタイルとZ分割のファイル構成、座標、`tile-layout.svg`、マニフェスト記録、4プレート構成は[3MFタイル分割とZ分割](tiling.md)を参照してください。
+XYタイルとZ分割のファイル構成、座標、`tile-layout.svg`、マニフェスト記録、Base White第1層0.10 mm、以降0.08 mmピッチ、3分割時のZプレート3がWhite合計4層・最小0.34 mmという構成は[3MFタイル分割とZ分割](tiling.md)を参照してください。
 
 XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-preview.png`を追加します。画像の1画素はそのタイルの1セルで、分割3MFと同じ範囲を表します。`manifest.json`の各`tiles`要素は`file`と`preview_file`で対応を記録します。
 
@@ -53,7 +53,7 @@ XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-prev
 
 ## 出力される settings.json
 
-`settings.json`は入力用設定ファイルではなく、そのジョブで確定した値の記録です。代表的な構造は次のとおりです。
+`settings.json`は入力用設定ファイルではなく、そのジョブで確定した値の記録です。次の例は`separate_z_parts: false`の非分割設定です。Z分割時は`color_layer_count: 8`、`first_layer_height: 0.1`、`layer_height: 0.08`、`top_layer_height: 0.08`となり、3分割時のZプレート3はWhite合計4層・最小0.34 mmになります。プレート別のBase White層数と厚みは`manifest.json`へ記録します。代表的な構造は次のとおりです。
 
 ```json
 {
@@ -71,8 +71,11 @@ XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-prev
   "brightness": 0.0,
   "contrast": 0.0,
   "saturation": 0.0,
-  "minimum_thickness": 1.0,
-  "maximum_thickness": 2.14689422,
+  "suppress_pale_colors": false,
+  "yellow_mix_color": "cyan",
+  "yellow_mix_percent": 0.0,
+  "minimum_thickness": 0.74,
+  "maximum_thickness": 1.94,
   "pixel_size": 0.22,
   "color_pixel_size": null,
   "grid_columns": null,
@@ -84,22 +87,31 @@ XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-prev
   "separate_z_parts": false,
   "color_region_parts": 3,
   "first_layer_height": 0.1,
-  "layer_height": 0.1,
-  "base_white_layers": 2,
-  "top_layer_height": 0.04,
-  "top_white_start": 1.0,
-  "minimum_top_white_layers": 0,
-  "exact_maximum_thickness": true,
+  "layer_height": 0.08,
+  "base_white_layers": 1,
+  "top_layer_height": 0.08,
+  "top_white_start": null,
+  "minimum_top_white_layers": 1,
+  "exact_maximum_thickness": false,
   "nozzle_diameter": 0.2,
   "color_model": "cmy",
   "color_layer_count": 7,
-  "pigment_order": ["cyan", "magenta", "yellow"],
+  "pigment_order": ["yellow", "magenta", "cyan"],
   "bambu_project": true,
   "maximum_input_pixels": 20000000,
   "maximum_triangles": 5000000,
   "effective_color_pixel_size": 0.22,
-  "effective_minimum_thickness": 1.0,
-  "effective_maximum_thickness": 2.14689422,
+  "effective_minimum_thickness": 0.74,
+  "effective_maximum_thickness": 1.94,
+  "minimum_z_part_thickness": 0.32,
+  "z_part_base_white_layers": 1,
+  "z_part_base_white_thickness": 0.1,
+  "z_part_minimum_build_thickness": 0.1,
+  "resolved_z_part_count": 3,
+  "z_separated_minimum_thickness": 0.96,
+  "z_separated_output_minimum_thickness": 0.94,
+  "z_separated_output_maximum_thickness": 2.14,
+  "z_separated_source_end": 1.06,
   "resolved_tile_rows": 1,
   "resolved_tile_columns": 1,
   "columns": 637,
@@ -107,7 +119,7 @@ XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-prev
   "pixel_size_x": 0.21978021978021978,
   "pixel_size_y": 0.21987315010570824,
   "schema_version": 1,
-  "generator_version": "0.3.0",
+  "generator_version": "0.4.0",
   "input_path": "/absolute/path/to/image.png",
   "input_settings_path": "/absolute/path/to/config/settings.json",
   "calibration_profile_id": null,
@@ -141,6 +153,6 @@ XY分割時は各`tiles/tile_rNN_cNN.3mf`に対応する`tiles/tile_rNN_cNN-prev
 
 ## ローカルパスと共有時の注意
 
-入力画像自体はジョブへコピーされません。ただし、`settings.json`の`input_path`、`input_settings_path`、`calibration_profile_path`にはローカルのディレクトリ名やファイル名が含まれます。Issueや第三者へ共有する前に機密情報がないか確認してください。
+入力画像自体は完了済みジョブへコピーされません。ただし、`settings.json`の`input_path`、`input_settings_path`、`calibration_profile_path`にはローカルのディレクトリ名やファイル名が含まれます。Issueや第三者へ共有する前に機密情報がないか確認してください。
 
 `manifest.json`には入力画像のSHA-256が含まれます。公開してよい識別情報か判断してから共有してください。

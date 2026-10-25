@@ -12,10 +12,13 @@ RSpec.describe Lithop::Settings do
       expect(settings.pixel_size_y).to be_within(1e-9).of(104.0 / 473)
       expect(settings.x_boundaries.last).to eq(140.0)
       expect(settings.y_boundaries.last).to eq(104.0)
-      expect(settings.effective_minimum_thickness).to eq(1.0)
-      expect(settings.effective_maximum_thickness).to eq(2.14689422)
-      expect(settings.base_white_layers).to eq(2)
-      expect(settings.layer_structure.top_layer_height).to eq(0.04)
+      expect(settings.maximum_thickness).to eq(1.94)
+      expect(settings.minimum_thickness).to eq(0.74)
+      expect(settings.effective_minimum_thickness).to eq(0.74)
+      expect(settings.effective_maximum_thickness).to eq(1.94)
+      expect(settings.base_white_layers).to eq(1)
+      expect(settings.layer_structure.top_layer_height).to eq(0.08)
+      expect(settings.layer_structure.top_white_layer_count(settings.effective_minimum_thickness)).to eq(1)
       expect(settings.bambu_project).to be(true)
     end
 
@@ -73,12 +76,30 @@ RSpec.describe Lithop::Settings do
   end
 
   describe "Z-part separation" do
-    it "keeps compatibility mode by default and accepts three color-region parts" do
+    it "uses a 0.1 mm first layer, 0.08 mm pitch, equal source slices, and one top White layer" do
       settings = described_class.new(separate_z_parts: true, color_region_parts: 3)
 
       expect(settings.separate_z_parts).to be(true)
       expect(settings.color_region_parts).to eq(3)
-      expect(settings.layer_structure.color_region_layer_ranges(3)).to eq([2...5, 5...7, 7...9])
+      expect(settings.color_layer_count).to eq(8)
+      expect(settings.first_layer_height).to eq(0.1)
+      expect(settings.layer_height).to eq(0.08)
+      expect(settings.resolved_z_part_count).to eq(3)
+      expect(settings.layer_structure.top_layer_height).to eq(0.08)
+      expect(settings.layer_structure.top_white_start).to eq(0.74)
+      expect(settings.effective_minimum_thickness).to eq(0.82)
+      expect(settings.effective_maximum_thickness).to eq(1.94)
+      expect(settings.z_separated_minimum_thickness).to eq(0.96)
+      expect(settings.z_separated_source_end).to eq(1.06)
+      expect(settings.z_part_base_white_thickness).to eq(0.1)
+      expect(settings.z_part_base_white_layers_by_plate).to eq([1, 1, 3])
+      expect(settings.z_part_base_white_thicknesses).to eq([0.1, 0.1, 0.26])
+      expect(settings.z_part_minimum_build_thickness).to eq(0.34)
+      expect(settings.z_separated_output_minimum_thickness).to eq(1.18)
+      expect(settings.z_separated_output_maximum_thickness).to eq(2.3)
+      expect(settings.resolved_z_part_boundaries).to eq([0.1, 0.42, 0.74, 1.06])
+      expect(settings.resolved_z_part_ranges).to eq([0.1...0.42, 0.42...0.74, 0.74...1.06])
+      expect(settings.resolved_z_color_ranges).to eq([0.1...0.42, 0.42...0.74, 0.74...0.74])
     end
 
     it "rejects invalid separation values" do
@@ -86,19 +107,19 @@ RSpec.describe Lithop::Settings do
         .to raise_error(Lithop::ConfigurationError, /separate_z_parts must be a boolean/)
       expect { described_class.new(color_region_parts: 0) }
         .to raise_error(Lithop::ConfigurationError, /color_region_parts must be an integer/)
-      expect { described_class.new(color_region_parts: 8) }
+      expect { described_class.new(color_region_parts: 4) }
         .to raise_error(Lithop::ConfigurationError, /color_region_parts must be an integer/)
     end
 
-    it "requires a positive top White region when separation is enabled" do
+    it "requires enough maximum thickness for the requested separated plates" do
       expect do
         described_class.new(
           separate_z_parts: true,
           minimum_thickness: 0.9,
-          maximum_thickness: 0.9,
+          maximum_thickness: 1.0,
           top_white_start: 0.9
         )
-      end.to raise_error(Lithop::ConfigurationError, /positive top White thickness/)
+      end.to raise_error(Lithop::ConfigurationError, /maximum_thickness of at least 1.06 mm/)
     end
   end
 
@@ -114,11 +135,11 @@ RSpec.describe Lithop::Settings do
   end
 
   describe "comparison layer structure" do
-    it "uses seven color layers in cyan, magenta, yellow order by default" do
+    it "uses seven color layers in yellow, magenta, cyan order by default" do
       settings = described_class.new
 
       expect(settings.color_layer_count).to eq(7)
-      expect(settings.pigment_order).to eq(%i[cyan magenta yellow])
+      expect(settings.pigment_order).to eq(%i[yellow magenta cyan])
     end
 
     it "accepts a four-layer comparison with a reversed pigment order" do
@@ -132,6 +153,11 @@ RSpec.describe Lithop::Settings do
       expect(settings.pigment_order).to eq(%i[yellow magenta cyan])
     end
 
+    it "accepts all six pigment stacking orders" do
+      expect(described_class::PIGMENT_ORDERS.map { |order| described_class.new(pigment_order: order).pigment_order })
+        .to eq(described_class::PIGMENT_ORDERS)
+    end
+
     it "rejects an incomplete or repeated pigment order" do
       expect { described_class.new(pigment_order: "cyan,magenta,magenta") }
         .to raise_error(Lithop::ConfigurationError, /pigment_order must contain/)
@@ -139,7 +165,7 @@ RSpec.describe Lithop::Settings do
 
     it "requires a physical minimum thickness for the selected layer structure" do
       expect do
-        described_class.new(minimum_thickness: 0.95, maximum_thickness: 0.99)
+        described_class.new(minimum_thickness: 0.99, maximum_thickness: 1.01)
       end.to raise_error(Lithop::ConfigurationError, /no printable layer boundary/)
     end
   end
@@ -148,8 +174,8 @@ RSpec.describe Lithop::Settings do
     it "rounds requested limits to printable boundaries" do
       settings = described_class.new(width: 2.0, height: 1.0, pixel_size: 1.0)
 
-      expect(settings.effective_minimum_thickness).to be_within(0.001).of(1.0)
-      expect(settings.effective_maximum_thickness).to be_within(0.001).of(2.14689422)
+      expect(settings.effective_minimum_thickness).to be_within(0.001).of(0.74)
+      expect(settings.effective_maximum_thickness).to be_within(0.001).of(1.94)
       expect(settings.columns).to eq(2)
       expect(settings.rows).to eq(1)
     end
@@ -164,7 +190,7 @@ RSpec.describe Lithop::Settings do
 
     it "rejects a range without a printable boundary" do
       expect do
-        described_class.new(minimum_thickness: 0.81, maximum_thickness: 0.84)
+        described_class.new(minimum_thickness: 0.83, maximum_thickness: 0.85)
       end.to raise_error(Lithop::ConfigurationError, /no printable layer boundary/)
     end
   end
@@ -228,9 +254,16 @@ RSpec.describe Lithop::Settings do
   describe "image adjustments" do
     it "uses neutral percentages by default and accepts the full adjustment range" do
       expect(described_class.new.to_h.values_at(:brightness, :contrast, :saturation)).to eq([0.0, 0.0, 0.0])
+      expect(described_class.new.suppress_pale_colors).to be(false)
+      expect(described_class.new.to_h.values_at(:yellow_mix_color, :yellow_mix_percent)).to eq(["cyan", 0.0])
 
-      settings = described_class.new(brightness: -100.0, contrast: 25.0, saturation: 100.0)
+      settings = described_class.new(
+        brightness: -100.0, contrast: 25.0, saturation: 100.0, suppress_pale_colors: true,
+        yellow_mix_color: "magenta", yellow_mix_percent: 20.0
+      )
       expect(settings.to_h.values_at(:brightness, :contrast, :saturation)).to eq([-100.0, 25.0, 100.0])
+      expect(settings.suppress_pale_colors).to be(true)
+      expect(settings.to_h.values_at(:yellow_mix_color, :yellow_mix_percent)).to eq(["magenta", 20.0])
     end
 
     it "rejects non-finite and out-of-range adjustment percentages" do
@@ -240,6 +273,14 @@ RSpec.describe Lithop::Settings do
         .to raise_error(Lithop::ConfigurationError, /contrast must be a finite percentage from -100 to 100/)
       expect { described_class.new(saturation: 100.1) }
         .to raise_error(Lithop::ConfigurationError, /saturation must be a finite percentage from -100 to 100/)
+      expect { described_class.new(suppress_pale_colors: "false") }
+        .to raise_error(Lithop::ConfigurationError, /suppress_pale_colors must be a boolean/)
+      expect { described_class.new(yellow_mix_color: "yellow") }
+        .to raise_error(Lithop::ConfigurationError, /yellow_mix_color must be one of: cyan, magenta/)
+      expect { described_class.new(yellow_mix_percent: -0.1) }
+        .to raise_error(Lithop::ConfigurationError, /yellow_mix_percent must be a finite percentage from 0 to 100/)
+      expect { described_class.new(yellow_mix_percent: 100.1) }
+        .to raise_error(Lithop::ConfigurationError, /yellow_mix_percent must be a finite percentage from 0 to 100/)
     end
   end
 

@@ -33,8 +33,11 @@
   "brightness": 0.0,
   "contrast": 0.0,
   "saturation": 0.0,
-  "minimum_thickness": 1.0,
-  "maximum_thickness": 2.14689422,
+  "suppress_pale_colors": false,
+  "yellow_mix_color": "cyan",
+  "yellow_mix_percent": 0.0,
+  "minimum_thickness": 0.74,
+  "maximum_thickness": 1.94,
   "pixel_size": 0.5,
   "color_pixel_size": null,
   "grid_columns": null,
@@ -46,16 +49,16 @@
   "separate_z_parts": false,
   "color_region_parts": 3,
   "first_layer_height": 0.1,
-  "layer_height": 0.1,
-  "base_white_layers": 2,
-  "top_layer_height": 0.04,
-  "top_white_start": 1.0,
-  "minimum_top_white_layers": 0,
-  "exact_maximum_thickness": true,
+  "layer_height": 0.08,
+  "base_white_layers": 1,
+  "top_layer_height": 0.08,
+  "top_white_start": null,
+  "minimum_top_white_layers": 1,
+  "exact_maximum_thickness": false,
   "nozzle_diameter": 0.2,
   "color_model": "cmy",
   "color_layer_count": 7,
-  "pigment_order": ["cyan", "magenta", "yellow"],
+  "pigment_order": ["yellow", "magenta", "cyan"],
   "bambu_project": true
 }
 ```
@@ -96,8 +99,11 @@ lithop image.png --config presets/fine.json
 | `brightness` | `--brightness PERCENT` | `0.0` | sRGB明るさ補正。`-100`〜`100` |
 | `contrast` | `--contrast PERCENT` | `0.0` | sRGBコントラスト補正。`-100`〜`100` |
 | `saturation` | `--saturation PERCENT` | `0.0` | sRGB彩度補正。`-100`〜`100` |
-| `minimum_thickness` | `--min-thickness MM` | `1.0` | 要求最小厚さmm |
-| `maximum_thickness` | `--max-thickness MM` | `2.14689422` | 要求最大厚さmm |
+| `suppress_pale_colors` | `--suppress-pale-colors` / `--no-suppress-pale-colors` | `false` | ごく薄い色をWhiteへ落とす |
+| `yellow_mix_color` | `--yellow-mix-color COLOR` | `cyan` | Yellowへ混ぜる`cyan`または`magenta` |
+| `yellow_mix_percent` | `--yellow-mix-percent PERCENT` | `0.0` | Yellow被覆量から選択色へ置き換える割合。`0`〜`100` |
+| `minimum_thickness` | `--min-thickness MM` | `0.74` | 要求最小厚さmm。上部White 1層を含む |
+| `maximum_thickness` | `--max-thickness MM` | `1.94` | 要求最大厚さmm。ローカルUIでは0.01 mm刻み |
 | `pixel_size` | `--pixel-size MM` | `0.22` | XYセル寸法mm |
 | `color_pixel_size` | `--color-pixel-size MM` | `null` | `pixel_size`以上のCMYW色セル寸法。`null`は同じ寸法 |
 | `grid_columns` | なし | `637` | fit格子の列数。寸法または`pixel_size`指定時は未指定扱い |
@@ -106,19 +112,19 @@ lithop image.png --config presets/fine.json
 | `tile_layout` | `--tile-layout MODE` | `auto` | `auto`、`columns`、`rows`、`grid` |
 | `tile_rows` | `--tile-rows COUNT` | `null` | `grid`配置の行数 |
 | `tile_columns` | `--tile-columns COUNT` | `null` | `grid`配置の列数 |
-| `separate_z_parts` | `--separate-z-parts` | `false` | 下地White、CMYW色領域、上部WhiteをZ方向の別プレートにする |
-| `color_region_parts` | `--color-region-parts COUNT` | `3` | Z分離時のCMYW色領域の分割数 |
-| `first_layer_height` | `--first-layer-height MM` | `0.1` | 下地Whiteの層高mm |
-| `layer_height` | `--layer-height MM` | `0.1` | CMYW色領域の積層ピッチmm |
-| `base_white_layers` | なし | `2` | 色領域より下のWhite層数 |
-| `top_layer_height` | なし | `0.04` | 上部Whiteのスライス層高 |
-| `top_white_start` | なし | `1.0` | 上部Whiteの開始Z |
-| `minimum_top_white_layers` | なし | `0` | 上部Whiteに必要な最小層数 |
-| `exact_maximum_thickness` | なし | `true` | 最大厚みを正確に残すか |
+| `separate_z_parts` | `--separate-z-parts` | `false` | CMYWモデルを連続Zプレートへ分割し、強度に応じたBase Whiteを追加する |
+| `color_region_parts` | `--color-region-parts COUNT` | `3` | Zプレート数。3分割時のZプレート3はWhite合計4層、最小0.34 mm |
+| `first_layer_height` | `--first-layer-height MM` | `0.1` | 下地White第1層の層高mm |
+| `layer_height` | `--layer-height MM` | `0.08` | CMYW色領域の積層ピッチmm |
+| `base_white_layers` | なし | `1` | 色領域より下のWhite層数 |
+| `top_layer_height` | なし | `0.08` | 上部Whiteのスライス層高 |
+| `top_white_start` | なし | `null` | 上部Whiteの開始Z。`null`は色領域直後 |
+| `minimum_top_white_layers` | なし | `1` | 上部Whiteに必要な最小層数 |
+| `exact_maximum_thickness` | なし | `false` | 最大厚みを正確に残すか。既定は印刷境界へ切り下げる |
 | `nozzle_diameter` | `--nozzle-diameter MM` | `0.2` | `0.2`または`0.4` |
 | `color_model` | `--color-model MODEL` | `cmy` | 現在はCMYのみ |
-| `color_layer_count` | `--color-layer-count COUNT` | `7` | 色領域の4層、5層、7層 |
-| `pigment_order` | `--pigment-order LIST` | `["cyan", "magenta", "yellow"]` | バックライト側からのCMY順序 |
+| `color_layer_count` | `--color-layer-count COUNT` | `7` | 色領域の4層、5層、7層、8層。Z分割時は8層へ固定する |
+| `pigment_order` | `--pigment-order LIST` | `["yellow", "magenta", "cyan"]` | バックライト側からの順序。6通りのCMY順列 |
 | `bambu_project` | なし | `true` | 単一プレートのBambuプロジェクト情報を追加するか |
 | `maximum_input_pixels` | なし | `20000000` | ラスター入力、またはSVGの描画面の総画素数上限 |
 | `maximum_triangles` | なし | `5000000` | 推定STLと実際のCMYW 3MFの三角形数上限 |
@@ -127,7 +133,7 @@ lithop image.png --config presets/fine.json
 
 ## 標準構造
 
-`standard`は、外周なしの構造を使います。幅140 mm、高さ104 mm、637 × 473の均等fit格子、White下地2層、0.1 mmの色領域7層、連続高のWhite上面、Z=1.0 mm以上をスライスする0.04 mm層高、最大Z 2.14689422 mm、0.2 mmノズル、単一`lithophane`プレートを設定します。White上面は、材料表示色とチャート配合では指定された明暗値、それ以外の入力色ではRec.601輝度から求めます。Black、写真フレーム、導光板は出力しません。
+`standard`は、外周なしの構造を使います。幅140 mm、高さ104 mm、637 × 473の均等fit格子、White下地1層0.10 mm、0.08 mmの色領域7層、色領域直後から0.08 mmでスライスする連続高のWhite上面、最大Z 1.94 mm、0.2 mmノズル、単一`lithophane`プレートを設定します。最薄部の上部Whiteを1層に抑えた実効厚さは0.74–1.94 mmです。White上面は、材料表示色とチャート配合では指定された明暗値、それ以外の入力色ではRec.601輝度から求めます。Black、写真フレーム、導光板は出力しません。
 
 ```sh
 lithop path/to/image.jpeg
@@ -142,6 +148,10 @@ SVGでは、通常の厚さ格子と`color_pixel_size`を指定した色格子�
 `image_fit=cover`は出力領域を満たして余分を切り出し、`contain`は画像全体を収めて残りをWhiteにします。`crop_position_x`と`crop_position_y`は、`cover`では切り出す位置、`contain`では画像を置く位置です。`crop_scale`を`1`より小さくすると、`cover`では拡大して狭い範囲を切り出し、`contain`では画像を縮小してWhite領域を増やします。
 
 `brightness`、`contrast`、`saturation`はJPEG、PNG、SVGをsRGBへ正規化した後、格子へサンプリングする前にこの順で適用します。単位は百分率で、`0`は無補正です。明るさはRGB値へ加算し、コントラストは50%グレーを中心に、彩度はRec.601輝度を中心に調整します。`-100`はそれぞれ黒方向、コントラストなし、無彩色となり、`100`は既定量の2倍です。範囲外の値はクリップされます。同じ補正済み画像をWhite厚さとCMYW色選択で共有します。
+
+`suppress_pale_colors`は既定で`false`です。`true`または`--suppress-pale-colors`を指定すると、平均CMY濃度が4%以下のごく薄い色差を、色相によらずWhiteとして扱います。無効でも、7層の量子化でWhiteの方が近い色はWhiteレシピになります。特定画像の淡色調整には`brightness`、`contrast`、`saturation`を使用します。
+
+`yellow_mix_percent`はYellowの光透過を材料と光源に合わせて補正する任意設定で、既定の`0`では変更しません。`yellow_mix_color`で`cyan`または`magenta`を選び、各セルのYellow被覆量のうち指定割合をその色へ置き換えてから最寄りのCMYWレシピを選びます。たとえばCyan 20%ではY100の目標がC20/Y80になります。色領域が7層なら実際の配分は1層単位（約14.3%刻み）へ量子化されるため、20%はCyan 1層、Yellow 6層になります。White厚さは変更しません。
 
 `color_pixel_size`を指定すると、White厚さは`pixel_size`の格子で保ったまま、各色セル内の厚さセルが同じCMYWレシピを使います。色セルはモデル原点から独立して区切り、端には部分セルを残します。未指定時は従来どおり厚さと色が同じ格子です。
 
@@ -173,7 +183,9 @@ lithop images/page.png --project-dir output/book
 - `grid_columns`と`grid_rows`が同時に指定されていない、または正の整数ではない
 - `tile_count`が1以上の整数ではない、配置名が不明、`grid`の行数 × 列数が総数と一致しない
 - 行数または列数がXYセル数を超え、幅または高さが0セルになるタイルがある
-- `separate_z_parts`が真偽値ではない、または`color_region_parts`が1〜`color_layer_count`の整数ではない
+- `separate_z_parts`が真偽値ではない、または`color_region_parts`が1〜3の整数ではない
+- `suppress_pale_colors`が真偽値ではない
+- `yellow_mix_color`が`cyan`または`magenta`ではない、または`yellow_mix_percent`が0〜100の有限値ではない
 - Z分離時に上部Whiteの最小厚さが0になる
 - `color_pixel_size`が`null`でも`pixel_size`以上の正の有限値でもない
 - `image_fit`が`cover`または`contain`ではない
@@ -182,7 +194,7 @@ lithop images/page.png --project-dir output/book
 - 要求最小厚さが要求最大厚さを超える
 - ノズル径が0.2または0.4ではない
 - 色モデルが`cmy`ではない
-- 色領域が4層、5層、7層のいずれでもない
+- 色領域が4層、5層、7層、8層のいずれでもない
 - 顔料順にCyan、Magenta、Yellowが各1回含まれない
 - 余白が負、非数、または左右・上下の合計が画像領域を残さない
 - 要求厚さ内に印刷可能なレイヤー境界がない
@@ -195,21 +207,21 @@ lithop images/page.png --project-dir output/book
 要求厚さは、第1層と通常レイヤーで構成できるZ境界へ丸めます。実効最小厚さは要求値以上の最初の境界、実効最大厚さは要求値以下の最後の境界です。
 
 ```text
-requested: 1.0–2.14689422 mm
-effective: 1.0–2.14689422 mm
+requested: 0.74–1.94 mm
+effective: 0.74–1.94 mm
 ```
 
-標準構造では、0.0〜0.2 mmをWhite下地、0.2〜0.9 mmを7層の色領域、0.9〜1.0 mmをWhite、1.0 mm以上を0.04 mm刻みのWhiteとして扱います。最後の上面だけは2.14689422 mmで閉じます。
+非分割の標準構造では、0.0〜0.1 mmをWhite下地、0.1〜0.66 mmを7層の色領域、0.66 mm以上を0.08 mm刻みのTop Whiteとして扱います。Z分割では色領域を8層へ固定し、0.1〜0.74 mmを色領域、0.74 mm以上をTop Whiteとして扱います。既定の最大厚み1.94 mmは印刷可能な境界と一致します。
 
 ## 積層構造の比較
 
-`color_layer_count`と`pigment_order`は、標準の7層・Cyan、Magenta、Yellow順と、比較用の4層・5層や別順序を再現する設定です。Whiteは顔料列の後ろに固定されます。
+`color_layer_count`と`pigment_order`は、非分割の標準7層・YMC順と、比較用の4層・5層・8層や別順序を再現する設定です。`pigment_order`はCMY、CYM、MCY、MYC、YCM、YMCから選べます。Z分割時の`color_layer_count`は8層へ固定されます。Whiteは顔料列の後ろに固定されます。
 
 ## 校正片に使う設定
 
 `lithop calibrate`は、厚さ、ノズル、レイヤー高さ、色モデル、色領域の層数、顔料順、三角形数上限を設定から読みます。固定レイアウトで入力画像を使わないため、`width`、`height`、`margin_*`、画像配置、明るさ・コントラスト・彩度、`pixel_size`、`color_pixel_size`、`maximum_input_pixels`は使いません。
 
-現在の校正片は7層・`cyan,magenta,yellow`順と、White厚みを8段階取れる範囲を要求します。通常生成で使う`--calibration-profile`は入力設定キーではなくCLIオプションです。詳しくは[色校正](calibration.md)を参照してください。
+現在の校正片は7層と選択した`pigment_order`、White厚みを8段階取れる範囲を要求します。通常生成で使う`--calibration-profile`は入力設定キーではなくCLIオプションです。詳しくは[色校正](calibration.md)を参照してください。
 
 ## 出力される settings.json
 

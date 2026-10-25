@@ -10,7 +10,7 @@ RSpec.describe Lithop::Calibration::Target do
 
     expect(recipes.uniq.length).to eq(120)
     expect(target.white_patches.map(&:height)).to eq(
-      [1.0, 1.16, 1.32, 1.48, 1.64, 1.8, 2.0, 2.14689422]
+      [0.74, 0.9, 1.06, 1.22, 1.46, 1.62, 1.78, 1.94]
     )
     expect(target.patches.length).to eq(128)
   end

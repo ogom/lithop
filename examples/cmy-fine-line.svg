@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104"
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104" data-lithop-color-encoding="material-display"
      role="img" aria-labelledby="title desc">
   <title id="title">CMY fine-line evaluation target</title>
   <desc id="desc">Horizontal, vertical, diagonal, and separated CMY lines from 0.2 to 1.2 mm.</desc>

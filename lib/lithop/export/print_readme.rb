@@ -38,7 +38,7 @@ module Lithop
         - White thickness uses #{settings.pixel_size} mm XY cells; CMYW recipes use
           #{settings.effective_color_pixel_size} mm color cells.
         - Use 100% rectilinear infill and verify every layer in the slicer before printing.
-        - The effective thickness range is #{settings.effective_minimum_thickness}–#{settings.effective_maximum_thickness} mm.
+        - The effective thickness range is #{output_minimum_thickness(settings)}–#{output_maximum_thickness(settings)} mm.
       MARKDOWN
     end
 
@@ -52,8 +52,23 @@ module Lithop
     def z_part_line(settings)
       return "- Z regions remain combined into the material parts." unless settings.separate_z_parts
 
-      "- Z regions use #{settings.color_region_parts + 1} plates: each CMYW color region includes " \
-        "a Base White carrier, followed by Top White; every plate starts at Z=0."
+      "- The separated model uses #{settings.resolved_z_part_count} contiguous Z plates with Base White " \
+        "supports of #{settings.z_part_base_white_layers_by_plate.join("/")} layers " \
+        "(#{settings.z_part_base_white_thicknesses.join("/")} mm); every plate is at least " \
+        "#{settings.z_part_minimum_build_thickness} mm thick. The assembled thickness range is " \
+        "#{settings.z_separated_output_minimum_thickness}–#{settings.z_separated_output_maximum_thickness} mm."
+    end
+
+    def output_minimum_thickness(settings)
+      return settings.effective_minimum_thickness unless settings.separate_z_parts
+
+      settings.z_separated_output_minimum_thickness
+    end
+
+    def output_maximum_thickness(settings)
+      return settings.effective_maximum_thickness unless settings.separate_z_parts
+
+      settings.z_separated_output_maximum_thickness
     end
 
     def profile_material(profile, material)
@@ -81,7 +96,8 @@ module Lithop
       "- Use a #{settings.nozzle_diameter} mm nozzle, #{settings.first_layer_height} mm base layers,\n  " \
         "#{settings.layer_height} mm color layers, and #{upper_height} mm upper White layers."
     end
-    private_class_method :model_instruction, :z_part_line, :profile_material, :calibration_line, :thickness_method,
+    private_class_method :model_instruction, :z_part_line, :output_minimum_thickness, :profile_material,
+                         :calibration_line, :thickness_method,
                          :base_layer_description, :layer_height_description
   end
 end
