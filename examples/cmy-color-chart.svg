@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="104mm" viewBox="0 0 140 104" role="img" aria-labelledby="title desc" data-lithop-color-encoding="material-display">
   <title id="title">CMY配合・明暗チャート</title>
   <desc id="desc">横方向はCMY材料の配合とCMY黒、縦方向は0%から100%までの明暗を表します。</desc>
   <defs>

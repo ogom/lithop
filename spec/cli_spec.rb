@@ -93,13 +93,17 @@ RSpec.describe Lithop::CLI do
     expect(out.string).to include("Model height (default: 104.0)")
     expect(out.string).to include("0.2/0.4 (default: 0.2)")
     expect(out.string).to include("Layer height after first layer (default: 0.1)")
-    expect(out.string).to include("CMY/W color layers: 4/5/7 (default: 7)")
+    expect(out.string).to include("CMY/W color layers: 4/5/7/8 (default: 7; Z split: 8)")
     expect(out.string).to include("--tile-count COUNT")
     expect(out.string).to include("--separate-z-parts")
     expect(out.string).to include("--color-region-parts COUNT")
     expect(out.string).to include("--brightness PERCENT")
     expect(out.string).to include("--contrast PERCENT")
     expect(out.string).to include("--saturation PERCENT")
+    expect(out.string).to include("--suppress-pale-colors")
+    expect(out.string).to include("--no-suppress-pale-colors")
+    expect(out.string).to include("--yellow-mix-color COLOR")
+    expect(out.string).to include("--yellow-mix-percent PERCENT")
     expect(out.string).not_to include("--resolution")
     expect(out.string).not_to include("--nozzle MM")
     expect(out.string).not_to include("--first-layer MM")
@@ -132,6 +136,7 @@ RSpec.describe Lithop::CLI do
           "--image-fit", "contain", "--crop-position-x", "0.25", "--crop-position-y", "0.75",
           "--crop-scale", "0.8", "--color-pixel-size", "1.5",
           "--brightness", "20", "--contrast", "25", "--saturation", "30",
+          "--suppress-pale-colors", "--yellow-mix-color", "magenta", "--yellow-mix-percent", "20",
           "--separate-z-parts", "--color-region-parts", "2"
         ],
         cwd: directory
@@ -154,6 +159,8 @@ RSpec.describe Lithop::CLI do
       expect(settings.fetch("crop_scale")).to eq(0.8)
       expect(settings.fetch("color_pixel_size")).to eq(1.5)
       expect(settings.values_at("brightness", "contrast", "saturation")).to eq([20.0, 25.0, 30.0])
+      expect(settings.fetch("suppress_pale_colors")).to be(true)
+      expect(settings.values_at("yellow_mix_color", "yellow_mix_percent")).to eq(["magenta", 20.0])
       expect(settings.fetch("effective_color_pixel_size")).to eq(1.5)
       expect(settings.fetch("separate_z_parts")).to be(true)
       expect(settings.fetch("color_region_parts")).to eq(2)

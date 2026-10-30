@@ -192,12 +192,12 @@ RSpec.describe Lithop::ThreeMF do
         expect(model_settings).to include('<metadata key="extruder" value="4"/>')
         layer_ranges = archive.read("Metadata/layer_config_ranges.xml")
         expect(layer_ranges).to include('<object id="1">')
-        expect(layer_ranges).to include('min_z="1.0" max_z="2.14689422"')
+        expect(layer_ranges).to include('min_z="0.66" max_z="1.94"')
         expect(layer_ranges).to include('<option opt_key="extruder">4</option>')
-        expect(layer_ranges).to include('<option opt_key="layer_height">0.04</option>')
+        expect(layer_ranges).to include('<option opt_key="layer_height">0.08</option>')
         project = JSON.parse(archive.read("Metadata/project_settings.config"))
         expect(project.fetch("filament_colour")).to eq(%w[#0086D6 #EC008C #FCE300 #FFFFFF])
-        expect(project.fetch("min_layer_height")).to eq(["0.04"])
+        expect(project.fetch("min_layer_height")).to eq(["0.08"])
         expect(project.fetch("max_layer_height")).to eq(["0.14"])
       end
     end

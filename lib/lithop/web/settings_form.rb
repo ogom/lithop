@@ -6,12 +6,13 @@ module Lithop
     class SettingsForm
       FLOAT_FIELDS = %i[
         width height margin_top margin_right margin_bottom margin_left crop_position_x crop_position_y
-        crop_scale brightness contrast saturation minimum_thickness maximum_thickness pixel_size
+        crop_scale brightness contrast saturation yellow_mix_percent minimum_thickness maximum_thickness pixel_size
         color_pixel_size nozzle_diameter
       ].freeze
       INTEGER_FIELDS = %i[tile_count tile_rows tile_columns color_region_parts].freeze
-      STRING_FIELDS = %i[image_fit tile_layout].freeze
-      FIELD_NAMES = (FLOAT_FIELDS + INTEGER_FIELDS + STRING_FIELDS + [:separate_z_parts]).map(&:to_s).freeze
+      STRING_FIELDS = %i[image_fit tile_layout yellow_mix_color pigment_order].freeze
+      BOOLEAN_FIELDS = %i[suppress_pale_colors separate_z_parts].freeze
+      FIELD_NAMES = (FLOAT_FIELDS + INTEGER_FIELDS + STRING_FIELDS + BOOLEAN_FIELDS).map(&:to_s).freeze
 
       attr_reader :defaults
 
@@ -27,7 +28,9 @@ module Lithop
       end
 
       def values(settings = defaults)
-        settings.to_h.slice(*Settings::DEFAULTS.keys).transform_keys(&:to_s)
+        result = settings.to_h.slice(*Settings::DEFAULTS.keys).transform_keys(&:to_s)
+        result["pigment_order"] = settings.pigment_order.join(",")
+        result
       end
 
       private
@@ -37,7 +40,7 @@ module Lithop
         FLOAT_FIELDS.each { |key| assign_number(values, params, key, Float) }
         INTEGER_FIELDS.each { |key| assign_number(values, params, key, Integer) }
         STRING_FIELDS.each { |key| values[key] = params[key.to_s] if present?(params[key.to_s]) }
-        values[:separate_z_parts] = params["separate_z_parts"] == "1"
+        BOOLEAN_FIELDS.each { |key| values[key] = params[key.to_s] == "1" }
         clear_unused_grid(values)
         values
       rescue ArgumentError

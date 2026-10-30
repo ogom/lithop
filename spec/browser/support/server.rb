@@ -161,7 +161,20 @@ class BrowserTestLauncher
   def z_parts(request)
     return unless request.fetch("separate_z_parts", false)
 
-    { enabled: true, color_regions: Array.new(3) { |index| { id: "color_region_#{index + 1}" } } }
+    {
+      enabled: true,
+      requested_parts: 3,
+      resolved_parts: 3,
+      minimum_source_plate_thickness: 0.32,
+      minimum_plate_thickness: 0.34,
+      adjusted_minimum_total_thickness: 1.18,
+      base_white: {
+        included: true, layers_per_plate: [1, 1, 3],
+        thickness_per_plate: [0.1, 0.1, 0.26], repeated_per_plate: true
+      },
+      color_regions: Array.new(3) { |index| { id: "z_part_#{index + 1}" } },
+      plates: Array.new(3) { |index| { plate_id: index + 1, name: "Z plate #{index + 1}" } }
+    }
   end
 
   def fail_job(job_id)

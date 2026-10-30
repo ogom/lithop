@@ -6,6 +6,8 @@ require "rexml/xpath"
 module Lithop
   # Applies the self-contained, static subset accepted for SVG input.
   class SVGDocumentValidator
+    MATERIAL_DISPLAY_ATTRIBUTE = "data-lithop-color-encoding"
+    MATERIAL_DISPLAY_VALUE = "material-display"
     FORBIDDEN_ELEMENTS = %w[script foreignobject animate animatemotion animatetransform set].freeze
     LENGTH = /\A\+?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:px|mm|in)?\z/i
     NUMBER = /[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/
@@ -15,6 +17,7 @@ module Lithop
       validate_declarations!(data)
       document = parse(data)
       validate_document!(document)
+      document
     rescue REXML::ParseException => e
       raise InputError, "invalid SVG XML: #{e.message.lines.first.to_s.strip}"
     end
@@ -133,6 +136,7 @@ module Lithop
 
   # Rasterizes a validated SVG at the resolution required by the sampling grids.
   class SVGLoader
+    Result = Data.define(:image, :material_display)
     BASE_DPI = 96.0
     MAXIMUM_FILE_BYTES = 15_000_000
 
@@ -143,7 +147,7 @@ module Lithop
 
     def call(path, access:, sampling_grids: nil)
       data = read(path)
-      @validator.call(data)
+      document = @validator.call(data)
       ensure_loader!
 
       probe = render(data, scale: 1.0, access: :sequential)
@@ -153,10 +157,15 @@ module Lithop
 
       image = render(data, scale:, access:)
       validate_rendered_image!(image)
-      image
+      Result.new(image:, material_display: material_display?(document))
     end
 
     private
+
+    def material_display?(document)
+      document.root.attributes[SVGDocumentValidator::MATERIAL_DISPLAY_ATTRIBUTE] ==
+        SVGDocumentValidator::MATERIAL_DISPLAY_VALUE
+    end
 
     def read(path)
       raise InputError, "SVG input exceeds #{MAXIMUM_FILE_BYTES} bytes" if File.size(path) > MAXIMUM_FILE_BYTES

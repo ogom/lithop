@@ -25,8 +25,8 @@ Usage: lithop IMAGE [options]
 | `--tile-layout MODE` | String | `auto` | `auto`、`columns`、`rows`、`grid`から配置を選ぶ |
 | `--tile-rows COUNT` | Integer | なし | `grid`配置の行数を指定する |
 | `--tile-columns COUNT` | Integer | なし | `grid`配置の列数を指定する |
-| `--separate-z-parts` | — | 無効 | 下地White、CMYW色領域、上部Whiteを別プレートにする |
-| `--color-region-parts COUNT` | Integer | `3` | CMYW色領域のZ方向の分割数を指定する |
+| `--separate-z-parts` | — | 無効 | CMYWモデルを連続Zプレートへ分割し、強度に応じたBase Whiteを追加する |
+| `--color-region-parts COUNT` | Integer | `3` | Zプレート数を1〜3で指定する。3分割時のZプレート3はWhite合計4層、最小0.34 mm |
 | `--margin-top MM` | Float | `0` | 上側のWhite余白をmm単位で指定する |
 | `--margin-right MM` | Float | `0` | 右側のWhite余白をmm単位で指定する |
 | `--margin-bottom MM` | Float | `0` | 下側のWhite余白をmm単位で指定する |
@@ -38,16 +38,20 @@ Usage: lithop IMAGE [options]
 | `--brightness PERCENT` | Float | `0` | sRGB明るさを`-100`〜`100`で補正する |
 | `--contrast PERCENT` | Float | `0` | sRGBコントラストを`-100`〜`100`で補正する |
 | `--saturation PERCENT` | Float | `0` | sRGB彩度を`-100`〜`100`で補正する |
-| `--min-thickness MM` | Float | `1.0` | 要求最小厚さをmm単位で指定する |
-| `--max-thickness MM` | Float | `2.14689422` | 要求最大厚さをmm単位で指定する |
+| `--suppress-pale-colors` | — | 無効 | ごく薄い色をWhiteへ落とす |
+| `--no-suppress-pale-colors` | — | — | ごく薄い色もCMYレイヤー候補として残す |
+| `--yellow-mix-color COLOR` | String | `cyan` | Yellowへ混ぜる色を`cyan`または`magenta`から選ぶ |
+| `--yellow-mix-percent PERCENT` | Float | `0` | Yellow被覆量から選択色へ置き換える割合を`0`〜`100`で指定する |
+| `--min-thickness MM` | Float | `0.74` | 要求最小厚さをmm単位で指定する |
+| `--max-thickness MM` | Float | `1.94` | 要求最大厚さをmm単位で指定する |
 | `--pixel-size MM` | Float | `0.22` | XYセル寸法をmm単位で指定する |
 | `--color-pixel-size MM` | Float | `--pixel-size`と同じ | `--pixel-size`以上のCMYW色セル寸法を指定する |
 | `--first-layer-height MM` | Float | `0.1` | 下地Whiteの層高をmm単位で指定する |
-| `--layer-height MM` | Float | `0.1` | CMYW色領域の積層ピッチを指定する |
+| `--layer-height MM` | Float | `0.08` | CMYW色領域の積層ピッチを指定する |
 | `--nozzle-diameter MM` | Float | `0.2` | ノズル径を`0.2`または`0.4`から選ぶ |
 | `--color-model MODEL` | String | `cmy` | 色モデルを指定する。現在は`cmy`のみ |
-| `--color-layer-count COUNT` | Integer | `7` | 色領域を`4`層、`5`層、`7`層から選ぶ |
-| `--pigment-order LIST` | String | `cyan,magenta,yellow` | CMYの顔料順をカンマ区切りで指定する |
+| `--color-layer-count COUNT` | Integer | `7` | 色領域を`4`層、`5`層、`7`層、`8`層から選ぶ。Z分割時は`8`層へ固定する |
+| `--pigment-order LIST` | String | `yellow,magenta,cyan` | バックライト側からの顔料順。CMY、CYM、MCY、MYC、YCM、YMC |
 | `--config FILE` | Path | `PROJECT/config/settings.json` | 入力設定JSONを明示する |
 | `--project-dir DIR` | Path | 現在のディレクトリ | 設定を読み、`build/`を作るプロジェクトを選ぶ |
 | `--calibration-profile FILE` | Path | なし | 完了した実測プロファイルを選ぶ |
@@ -102,6 +106,18 @@ lithop image.png --image-fit contain
 lithop image.png --brightness 10 --contrast 15 --saturation 20
 ```
 
+ごく薄い色をWhiteとして扱いたい場合は、淡色のWhite化を有効にします。
+
+```sh
+lithop image.png --suppress-pale-colors
+```
+
+Yellowの光透過を抑えるため、その被覆量の20%をCyanへ置き換えます。7層では最寄りのCyan 1層、Yellow 6層へ量子化されます。
+
+```sh
+lithop examples/cmy-color-chart.svg --yellow-mix-color cyan --yellow-mix-percent 20
+```
+
 別のプロジェクトと入力設定を使います。
 
 ```sh
@@ -131,7 +147,7 @@ in /absolute/path/to/build/<job_id>
 
 ## 校正片を生成する
 
-標準の7層・`Cyan -> Magenta -> Yellow`構造について、全120レシピとWhite厚み8段階を持つ140 × 104 mmの校正SVGと、同じ配置の印刷用3MFを生成します。画像は指定しません。
+標準の7層と選択した積層順について、全120レシピとWhite厚み8段階を持つ140 × 104 mmの校正SVGと、同じ配置の印刷用3MFを生成します。既定はYMCで、画像は指定しません。
 
 ```text
 Usage: lithop calibrate [options]
@@ -139,14 +155,14 @@ Usage: lithop calibrate [options]
 
 | オプション | 型 | 既定値 | 説明 |
 | --- | --- | ---: | --- |
-| `--min-thickness MM` | Float | `1.0` | 要求最小厚さを指定する |
-| `--max-thickness MM` | Float | `2.14689422` | 要求最大厚さを指定する |
+| `--min-thickness MM` | Float | `0.74` | 要求最小厚さを指定する |
+| `--max-thickness MM` | Float | `1.94` | 要求最大厚さを指定する |
 | `--first-layer-height MM` | Float | `0.1` | 下地Whiteの層高を指定する |
-| `--layer-height MM` | Float | `0.1` | CMYW色領域の積層ピッチを指定する |
+| `--layer-height MM` | Float | `0.08` | CMYW色領域の積層ピッチを指定する |
 | `--nozzle-diameter MM` | Float | `0.2` | ノズル径を`0.2`または`0.4`から選ぶ |
 | `--color-model MODEL` | String | `cmy` | 色モデルを指定する |
 | `--color-layer-count COUNT` | Integer | `7` | 色領域の層数を指定する |
-| `--pigment-order LIST` | String | `cyan,magenta,yellow` | CMYの顔料順を指定する |
+| `--pigment-order LIST` | String | `yellow,magenta,cyan` | バックライト側からの顔料順を指定する |
 | `--config FILE` | Path | `PROJECT/config/settings.json` | 入力設定JSONを明示する |
 | `--project-dir DIR` | Path | 現在のディレクトリ | 設定と出力先のプロジェクトを選ぶ |
 | `-v`, `--version` | — | — | バージョンを表示して終了する |

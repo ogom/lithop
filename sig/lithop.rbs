@@ -49,6 +49,9 @@ module Lithop
     attr_reader brightness: Numeric
     attr_reader contrast: Numeric
     attr_reader saturation: Numeric
+    attr_reader suppress_pale_colors: bool
+    attr_reader yellow_mix_color: String
+    attr_reader yellow_mix_percent: Numeric
     attr_reader minimum_thickness: Numeric
     attr_reader maximum_thickness: Numeric
     attr_reader pixel_size: Numeric
@@ -88,6 +91,19 @@ module Lithop
     def resolved_tile_shape: () -> [Integer, Integer]
     def resolved_tile_rows: () -> Integer
     def resolved_tile_columns: () -> Integer
+    def resolved_z_part_boundaries: () -> Array[Float]
+    def resolved_z_part_ranges: () -> Array[Range[Float]]
+    def resolved_z_color_ranges: () -> Array[Range[Float]]
+    def resolved_z_part_count: () -> Integer
+    def z_separated_minimum_thickness: () -> Float
+    def z_separated_source_end: () -> Float
+    def z_part_base_white_layers: (?Integer index) -> Integer
+    def z_part_base_white_thickness: (?Integer index) -> Float
+    def z_part_base_white_layers_by_plate: () -> Array[Integer]
+    def z_part_base_white_thicknesses: () -> Array[Float]
+    def z_part_minimum_build_thickness: () -> Float
+    def z_separated_output_minimum_thickness: () -> Float
+    def z_separated_output_maximum_thickness: () -> Float
     def estimated_triangles: () -> Integer
     def triangle_limit_message: (String label, Integer triangle_count) -> String
     def x_boundaries: () -> Array[Numeric]

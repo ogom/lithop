@@ -41,6 +41,10 @@ RSpec.describe Lithop::Web::App do
 
       expect(page.status).to eq(200)
       expect(page.body).to include("Lithop", "multipart/form-data", "test-token")
+      expect(page.body).to include('class="site-header-main"', 'class="primary-navigation"')
+      expect(page.body).not_to include('id="menu-toggle"', 'class="navigation-scrim"')
+      expect(page.body).to include('name="suppress_pale_colors"', "ごく薄い色差をWhiteにする")
+      expect(page.body).to include('name="yellow_mix_color"', 'name="yellow_mix_percent"', "Yellow混色率")
       expect(page["content-security-policy"]).to include("default-src 'self'")
       expect(page["content-security-policy"]).to include("style-src-attr 'unsafe-inline'")
       expect(stylesheet.status).to eq(200)
@@ -63,7 +67,8 @@ RSpec.describe Lithop::Web::App do
       upload = Rack::Multipart::UploadedFile.new(input.path, "image/png", filename: "input.png")
       body = Rack::Multipart.build_multipart(
         "csrf_token" => "test-token", "image" => upload, "width" => "2", "height" => "2",
-        "pixel_size" => "1", "brightness" => "10", "separate_z_parts" => "1"
+        "pixel_size" => "1", "brightness" => "10", "yellow_mix_color" => "magenta",
+        "yellow_mix_percent" => "20", "separate_z_parts" => "1"
       )
 
       response = request.post(
@@ -74,7 +79,8 @@ RSpec.describe Lithop::Web::App do
       expect(response["location"]).to end_with("/?job=web-job")
       expect(launcher.request.fetch(:filename)).to eq("input.png")
       expect(launcher.request.fetch(:settings)).to have_attributes(
-        width: 2.0, height: 2.0, pixel_size: 1.0, brightness: 10.0, separate_z_parts: true
+        width: 2.0, height: 2.0, pixel_size: 1.0, brightness: 10.0,
+        yellow_mix_color: "magenta", yellow_mix_percent: 20.0, separate_z_parts: true
       )
     ensure
       input&.close!
@@ -351,7 +357,7 @@ RSpec.describe Lithop::Web::App do
 
       expect(response.status).to eq(200)
       expect(JSON.parse(response.body)).to eq(
-        "tile_count" => 6, "tile_rows" => 2, "tile_columns" => 3, "z_plate_count" => 4
+        "tile_count" => 6, "tile_rows" => 2, "tile_columns" => 3, "z_plate_count" => 3
       )
     end
   end

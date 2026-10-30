@@ -119,10 +119,9 @@ module Lithop
 
     def validate_z_parts!
       raise ConfigurationError, "separate_z_parts must be a boolean" unless [true, false].include?(separate_z_parts)
-      unless color_region_parts.is_a?(Integer) && color_region_parts.positive? &&
-             color_region_parts <= color_layer_count
-        raise ConfigurationError, "color_region_parts must be an integer from 1 to color_layer_count"
-      end
+      return if color_region_parts.is_a?(Integer) && color_region_parts.between?(1, Settings::MAXIMUM_Z_PARTS)
+
+      raise ConfigurationError, "color_region_parts must be an integer from 1 to #{Settings::MAXIMUM_Z_PARTS}"
     end
 
     def validate_layer_structure!
@@ -187,6 +186,17 @@ module Lithop
 
         raise ConfigurationError, "#{key} must be a finite percentage from -100 to 100"
       end
+      unless yellow_mix_percent.is_a?(Numeric) && yellow_mix_percent.finite? &&
+             yellow_mix_percent.between?(0.0, 100.0)
+        raise ConfigurationError, "yellow_mix_percent must be a finite percentage from 0 to 100"
+      end
+      unless Settings::YELLOW_MIX_COLORS.include?(yellow_mix_color)
+        raise ConfigurationError,
+              "yellow_mix_color must be one of: #{Settings::YELLOW_MIX_COLORS.join(", ")}"
+      end
+      return if [true, false].include?(suppress_pale_colors)
+
+      raise ConfigurationError, "suppress_pale_colors must be a boolean"
     end
 
     def validate_nozzle_diameter!
@@ -227,16 +237,27 @@ module Lithop
   # Validated dimensions, print parameters, and output limits for a generation job.
   # rubocop:disable-next Metrics/ClassLength
   class Settings
+    MAXIMUM_Z_PARTS = 3
+    MINIMUM_Z_PART_THICKNESS = 0.32
+    MINIMUM_Z_SOURCE_THICKNESS = MINIMUM_Z_PART_THICKNESS * MAXIMUM_Z_PARTS
+    Z_SEPARATED_COLOR_LAYER_COUNT = 8
+    Z_SEPARATED_FIRST_LAYER_HEIGHT = 0.1
+    Z_SEPARATED_LAYER_HEIGHT = 0.08
+    Z_PART_BASE_WHITE_LAYERS = 1
+    Z_PART_MINIMUM_TOTAL_LAYERS = 4
     include SettingsValidation
 
     MICRONS_PER_MM = LayerStructure::MICRONS_PER_MM
     COLOR_MODELS = %w[cmy].freeze
     NOZZLE_DIAMETERS = [0.2, 0.4].freeze
-    COLOR_LAYER_COUNTS = [4, 5, 7].freeze
+    COLOR_LAYER_COUNTS = [4, 5, 7, 8].freeze
     LAYOUT_PROFILES = ["standard"].freeze
     IMAGE_FITS = %w[cover contain].freeze
     TILE_LAYOUTS = %w[auto columns rows grid].freeze
+    YELLOW_MIX_COLORS = %w[cyan magenta].freeze
     PIGMENTS = %i[cyan magenta yellow].freeze
+    PIGMENT_ORDERS = PIGMENTS.permutation.map(&:freeze).freeze
+    DEFAULT_PIGMENT_ORDER = %i[yellow magenta cyan].freeze
     MINIMUM_TOP_WHITE_LAYERS = LayerStructure::MINIMUM_TOP_WHITE_LAYERS
     DEFAULTS = {
       layout_profile: "standard",
@@ -253,8 +274,11 @@ module Lithop
       brightness: 0.0,
       contrast: 0.0,
       saturation: 0.0,
-      minimum_thickness: 1.0,
-      maximum_thickness: 2.14689422,
+      suppress_pale_colors: false,
+      yellow_mix_color: "cyan",
+      yellow_mix_percent: 0.0,
+      minimum_thickness: 0.74,
+      maximum_thickness: 1.94,
       pixel_size: 0.22,
       color_pixel_size: nil,
       grid_columns: 637,
@@ -266,16 +290,16 @@ module Lithop
       separate_z_parts: false,
       color_region_parts: 3,
       first_layer_height: 0.1,
-      layer_height: 0.1,
-      base_white_layers: 2,
-      top_layer_height: 0.04,
-      top_white_start: 1.0,
-      minimum_top_white_layers: 0,
-      exact_maximum_thickness: true,
+      layer_height: 0.08,
+      base_white_layers: 1,
+      top_layer_height: 0.08,
+      top_white_start: nil,
+      minimum_top_white_layers: 1,
+      exact_maximum_thickness: false,
       nozzle_diameter: 0.2,
       color_model: "cmy",
       color_layer_count: 7,
-      pigment_order: PIGMENTS,
+      pigment_order: DEFAULT_PIGMENT_ORDER,
       bambu_project: true,
       maximum_input_pixels: 20_000_000,
       maximum_triangles: 5_000_000
@@ -290,6 +314,7 @@ module Lithop
       settings = DEFAULTS.merge(values).merge(layout_profile: profile)
       DEFAULTS.each_key { |key| instance_variable_set("@#{key}", settings.fetch(key)) }
       @pigment_order = normalize_pigment_order(@pigment_order)
+      apply_z_separated_layer_structure! if @separate_z_parts
       validate!
       @layer_structure = LayerStructure.new(
         first_layer_height:, layer_height:, color_layer_count:, minimum_thickness:, maximum_thickness:,
@@ -304,6 +329,7 @@ module Lithop
 
       validate_physical_minimum!
       validate_separated_top_white!
+      validate_z_separated_thickness_range!
     end
 
     def without_default_grid(values)
@@ -314,6 +340,18 @@ module Lithop
       values.merge(grid_columns: nil, grid_rows: nil)
     end
     private :without_default_grid
+
+    def apply_z_separated_layer_structure!
+      @color_layer_count = Z_SEPARATED_COLOR_LAYER_COUNT
+      @first_layer_height = Z_SEPARATED_FIRST_LAYER_HEIGHT
+      @layer_height = Z_SEPARATED_LAYER_HEIGHT
+      @top_layer_height = Z_SEPARATED_LAYER_HEIGHT
+      @top_white_start = ((@base_white_layers * @first_layer_height) +
+                          (@color_layer_count * @layer_height)).round(9)
+      @minimum_thickness = [@minimum_thickness, @top_white_start + @top_layer_height].max.round(9)
+      @exact_maximum_thickness = false
+    end
+    private :apply_z_separated_layer_structure!
 
     def columns = sampling_grid.columns
     def rows = sampling_grid.rows
@@ -333,6 +371,77 @@ module Lithop
 
     def resolved_tile_rows = resolved_tile_shape.fetch(0)
     def resolved_tile_columns = resolved_tile_shape.fetch(1)
+
+    def resolved_z_part_boundaries
+      @resolved_z_part_boundaries ||= begin
+        start = layer_structure.base_white_thickness
+        source_thickness = z_separated_minimum_thickness / color_region_parts
+        boundaries = Array.new(color_region_parts) do |index|
+          (start + (index * source_thickness)).round(9)
+        end
+        [*boundaries, z_separated_source_end].freeze
+      end
+    end
+
+    def resolved_z_part_ranges
+      @resolved_z_part_ranges ||= resolved_z_part_boundaries.each_cons(2).map do |start, finish|
+        start...finish
+      end.freeze
+    end
+
+    def resolved_z_color_ranges
+      color_start = layer_structure.color_region_start
+      color_end = layer_structure.color_region_end
+      resolved_z_part_ranges.map do |range|
+        [range.begin, color_start].max...[range.end, color_end].min
+      end.freeze
+    end
+
+    def resolved_z_part_count = color_region_parts
+
+    def z_separated_minimum_thickness
+      MINIMUM_Z_SOURCE_THICKNESS.round(9)
+    end
+
+    def z_separated_source_end
+      (layer_structure.base_white_thickness + z_separated_minimum_thickness).round(9)
+    end
+
+    def z_part_base_white_layers(index = 0)
+      return Z_PART_BASE_WHITE_LAYERS unless separate_z_parts
+
+      source_layers = (z_part_minimum_source_thickness(index) / layer_height).round
+      [Z_PART_BASE_WHITE_LAYERS, Z_PART_MINIMUM_TOTAL_LAYERS - source_layers].max
+    end
+
+    def z_part_base_white_thickness(index = 0)
+      layers = z_part_base_white_layers(index)
+      (first_layer_height + ((layers - 1) * layer_height)).round(9)
+    end
+
+    def z_part_minimum_build_thickness
+      resolved_z_part_ranges.each_index.map do |index|
+        (z_part_minimum_source_thickness(index) + z_part_base_white_thickness(index)).round(9)
+      end.min
+    end
+
+    def z_separated_output_minimum_thickness
+      without_source_base = effective_minimum_thickness - layer_structure.base_white_thickness
+      (without_source_base + z_part_base_white_thicknesses.sum).round(9)
+    end
+
+    def z_separated_output_maximum_thickness
+      without_source_base = effective_maximum_thickness - layer_structure.base_white_thickness
+      (without_source_base + z_part_base_white_thicknesses.sum).round(9)
+    end
+
+    def z_part_base_white_layers_by_plate
+      resolved_z_part_ranges.each_index.map { |index| z_part_base_white_layers(index) }.freeze
+    end
+
+    def z_part_base_white_thicknesses
+      resolved_z_part_ranges.each_index.map { |index| z_part_base_white_thickness(index) }.freeze
+    end
 
     def estimated_triangles
       (4 * columns * rows) + (4 * (columns + rows))
@@ -372,12 +481,27 @@ module Lithop
         effective_color_pixel_size: effective_color_pixel_size,
         effective_minimum_thickness: effective_minimum_thickness,
         effective_maximum_thickness: effective_maximum_thickness,
+        minimum_z_part_thickness: MINIMUM_Z_PART_THICKNESS,
+        z_part_base_white_layers: Z_PART_BASE_WHITE_LAYERS,
+        z_part_base_white_thickness: z_part_base_white_thickness,
+        z_part_minimum_build_thickness: z_part_minimum_build_thickness,
+        resolved_z_part_count: resolved_z_part_count,
+        z_separated_minimum_thickness: z_separated_minimum_thickness,
+        z_separated_output_minimum_thickness: z_separated_output_minimum_thickness,
+        z_separated_output_maximum_thickness: z_separated_output_maximum_thickness,
+        z_separated_source_end: z_separated_source_end,
         columns: columns, rows: rows, pixel_size_x: pixel_size_x, pixel_size_y: pixel_size_y,
         resolved_tile_rows: resolved_tile_rows, resolved_tile_columns: resolved_tile_columns
       )
     end
 
     private
+
+    def z_part_minimum_source_thickness(index)
+      range = resolved_z_part_ranges.fetch(index)
+      source_end = [range.end, effective_minimum_thickness].min
+      [source_end - range.begin, 0.0].max.round(9)
+    end
 
     def automatic_tile_shape
       factors = factor_shapes.map do |row_count, column_count|
@@ -402,9 +526,17 @@ module Lithop
 
     def validate_separated_top_white!
       return unless separate_z_parts
-      return if effective_minimum_thickness > layer_structure.color_region_end
+      return if z_separated_source_end > layer_structure.color_region_end
 
       raise ConfigurationError, "separate_z_parts requires a positive top White thickness"
+    end
+
+    def validate_z_separated_thickness_range!
+      return unless separate_z_parts
+      return if z_separated_source_end <= effective_maximum_thickness
+
+      raise ConfigurationError,
+            "Z separation requires maximum_thickness of at least #{z_separated_source_end} mm"
     end
   end
 end

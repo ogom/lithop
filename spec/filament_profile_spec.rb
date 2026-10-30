@@ -58,6 +58,14 @@ RSpec.describe Lithop::FilamentProfile do
     expect(cyan_magenta.density).to be_within(0.01).of(0.5)
   end
 
+  it "limits material-display mixtures without disabling exact material colors" do
+    pale_yellow = [254, 253, 222].map { |value| value.fdiv(255) }
+    exact_yellow = [252, 227, 0].map { |value| value.fdiv(255) }
+
+    expect(described_class.display_sample(pale_yellow, mixtures: false)).to be_nil
+    expect(described_class.display_cmy(exact_yellow, mixtures: false)).to eq([0.0, 0.0, 1.0])
+  end
+
   it "maps the chart CMY black while preserving its opacity as density" do
     black_50_percent = [135, 139, 143].map { |value| value.fdiv(255) }
     sample = described_class.display_sample(black_50_percent)

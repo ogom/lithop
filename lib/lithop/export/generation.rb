@@ -92,7 +92,11 @@ module Lithop
       plan = if @settings.separate_z_parts
                top_geometry = tile_white_geometry(
                  tile, tile_model, white_heights,
-                 base_height: @settings.layer_structure.color_region_end
+                 base_height: [
+                   @settings.layer_structure.color_region_end,
+                   @settings.resolved_z_part_ranges.last.begin
+                 ].max,
+                 minimum_height: @settings.effective_minimum_thickness
                )
                z_separated_material_mesh_plan(tile_model, top_geometry)
              else
@@ -102,11 +106,12 @@ module Lithop
       [tile_model, plan]
     end
 
-    def tile_white_geometry(tile, model, heights, base_height: 0.0)
+    def tile_white_geometry(tile, model, heights, base_height: 0.0, minimum_height: nil)
       stride = @settings.columns + 1
       sliced_heights = (tile.row_start..tile.row_end).flat_map do |row|
         heights.slice((row * stride) + tile.column_start, model.columns + 1)
       end
+      sliced_heights.map! { |height| [height, minimum_height].max } if minimum_height
       Geometry.new(
         heights: sliced_heights,
         columns: model.columns,
@@ -119,15 +124,8 @@ module Lithop
     end
 
     def z_separated_material_mesh_plan(model, top_geometry)
-      base_height = @settings.layer_structure.base_white_thickness
-      base_geometry = BoxGeometry.new(
-        width: model.x_boundaries.last,
-        height: model.y_boundaries.last,
-        z_min: 0.0,
-        z_max: base_height
-      )
       ZSeparatedMaterialMeshPlan.new(
-        model:, base_geometry:, top_geometry:, settings: @settings,
+        model:, top_geometry:, settings: @settings,
         maximum_triangles: @settings.maximum_triangles,
         limit_message: ->(count) { @settings.triangle_limit_message("physical Z-separated CMYW mesh", count) }
       ).call

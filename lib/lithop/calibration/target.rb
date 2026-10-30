@@ -7,12 +7,12 @@ module Lithop
       private
 
       def validate_structure!
-        unless @settings.color_layer_count == 7 &&
-               @settings.pigment_order == Palette::PIGMENTS
-          raise ConfigurationError,
-                "calibration target requires seven layers in cyan,magenta,yellow pigment order"
-        end
+        return validate_white_levels! if @settings.color_layer_count == 7
 
+        raise ConfigurationError, "calibration target requires seven color layers"
+      end
+
+      def validate_white_levels!
         levels = @settings.layer_structure.normal_layer_count(@settings.effective_maximum_thickness) -
                  @settings.layer_structure.normal_layer_count(@settings.effective_minimum_thickness) + 1
         return if levels >= Target::WHITE_STAGE_COUNT

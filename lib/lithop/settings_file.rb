@@ -39,6 +39,7 @@ module Lithop
       values[:image_fit] = values[:image_fit].downcase if values[:image_fit].is_a?(String)
       values[:layout_profile] = values[:layout_profile].downcase if values[:layout_profile].is_a?(String)
       values[:tile_layout] = values[:tile_layout].downcase if values[:tile_layout].is_a?(String)
+      values[:yellow_mix_color] = values[:yellow_mix_color].downcase if values[:yellow_mix_color].is_a?(String)
       values
     end
     private_class_method :normalize_values

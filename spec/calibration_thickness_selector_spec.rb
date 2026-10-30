@@ -7,7 +7,7 @@ RSpec.describe Lithop::Calibration::ThicknessSelector do
     profile = measured_calibration_profile(settings)
     selector = described_class.new(profile:, settings:)
 
-    expect(selector.call([0.0, 1.0])).to eq([1.0, 2.14689422])
+    expect(selector.call([0.0, 1.0])).to eq([0.74, 1.94])
   end
 
   it "rejects White stages without a measurable luminance range" do

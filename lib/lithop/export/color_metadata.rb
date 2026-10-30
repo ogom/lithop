@@ -68,20 +68,31 @@ module Lithop
 
     def z_part_separation
       structure = @settings.layer_structure
-      boundaries = structure.z_boundaries(@settings.base_white_layers + @settings.color_layer_count)
-      color_regions = structure.color_region_layer_ranges(@settings.color_region_parts)
-                               .each_with_index.map do |range, index|
+      color_regions = @settings.resolved_z_color_ranges.each_with_index.filter_map do |range, index|
+        next unless range.begin < range.end
+
         {
-          id: "color_region_#{index + 1}",
-          layer_start: range.begin - @settings.base_white_layers + 1,
-          layer_end: range.end - @settings.base_white_layers,
-          z_min: boundaries.fetch(range.begin),
-          z_max: boundaries.fetch(range.end)
+          id: "z_part_#{index + 1}",
+          z_min: range.begin,
+          z_max: range.end
         }
       end
       metadata = {
         enabled: @settings.separate_z_parts,
-        base_white: { id: "base_white", z_min: 0.0, z_max: structure.base_white_thickness },
+        requested_parts: @settings.color_region_parts,
+        resolved_parts: @settings.resolved_z_part_count,
+        minimum_source_plate_thickness: Settings::MINIMUM_Z_PART_THICKNESS,
+        minimum_plate_thickness: @settings.z_part_minimum_build_thickness,
+        adjusted_minimum_total_thickness: @settings.z_separated_output_minimum_thickness,
+        base_white: {
+          id: "base_white", included: true,
+          layers_per_plate: base_white_layers_per_plate,
+          thickness_per_plate: base_white_thickness_per_plate,
+          repeated_per_plate: true
+        },
+        source_base_white: {
+          id: "source_base_white", included: false, z_min: 0.0, z_max: structure.base_white_thickness
+        },
         color_regions:,
         top_white: {
           id: "top_white", z_min: structure.color_region_end,
@@ -92,30 +103,42 @@ module Lithop
       metadata
     end
 
+    def base_white_layers_per_plate
+      return Settings::Z_PART_BASE_WHITE_LAYERS unless @settings.separate_z_parts
+
+      @settings.z_part_base_white_layers_by_plate
+    end
+
+    def base_white_thickness_per_plate
+      return @settings.z_part_base_white_thickness unless @settings.separate_z_parts
+
+      @settings.z_part_base_white_thicknesses
+    end
+
     def z_plates(metadata)
-      base_white = metadata.fetch(:base_white)
-      regions = metadata.fetch(:color_regions).map do |region|
-        region.merge(z_min: base_white.fetch(:z_min), build_z_max: region.fetch(:z_max))
-      end
-      regions << metadata.fetch(:top_white)
-      regions.each_with_index.map do |region, index|
-        z_min = region.fetch(:z_min)
-        z_max = region.fetch(:z_max)
+      top_white = metadata.fetch(:top_white)
+      ranges = @settings.resolved_z_part_ranges
+      ranges.each_with_index.map do |range, index|
+        z_min = range.begin
+        z_max = index == ranges.length - 1 ? top_white.fetch(:z_max) : range.end
         {
           plate_id: index + 1,
-          name: plate_name(region.fetch(:id)),
+          name: "Z plate #{index + 1}",
           source_z_min: z_min,
           source_z_max: z_max,
           build_z_min: 0.0,
-          build_z_max: (region[:build_z_max] || (z_max - z_min)).round(9)
+          build_z_max: (z_max - z_min + @settings.z_part_base_white_thickness(index)).round(9),
+          minimum_build_thickness: minimum_plate_build_thickness(range, index),
+          base_white_layers: @settings.z_part_base_white_layers(index),
+          base_white_thickness: @settings.z_part_base_white_thickness(index)
         }
       end
     end
 
-    def plate_name(id)
-      return "Top White" if id == "top_white"
-
-      id.sub("color_region_", "Color region ")
+    def minimum_plate_build_thickness(range, index)
+      source_end = [range.end, @settings.effective_minimum_thickness].min
+      source_thickness = [source_end - range.begin, 0.0].max
+      (source_thickness + @settings.z_part_base_white_thickness(index)).round(9)
     end
 
     def used_materials(artifacts)

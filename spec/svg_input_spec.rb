@@ -213,6 +213,27 @@ RSpec.describe "SVG image input" do
     expect(palette.nearest(zero_cmy).layers).to eq([:white] * 7)
   end
 
+  it "keeps the bundled circle colors synchronized with the CMY chart" do
+    expected_colors = %w[#0086d6 #fce300 #ec008c #007700 #000075 #e90000 #101820]
+    circle = File.read("examples/cmy-color-circle.svg")
+    chart = File.read("examples/cmy-color-chart.svg")
+    circle_colors = circle.scan(/fill="(#[0-9a-f]{6})"/i).flatten.map(&:downcase)
+    chart_colors = chart.scan(/fill:\s*(#[0-9a-f]{6})/i).flatten.map(&:downcase)
+
+    expect(circle_colors).to include(*expected_colors)
+    expect(chart_colors).to include(*expected_colors)
+
+    circle_settings = Lithop::Settings.new(width: 140.0, height: 104.0, pixel_size: 1.0)
+    result = Lithop::ImagePipeline.new(circle_settings).call("examples/cmy-color-circle.svg")
+    sample_x = chart_coordinate(70.0, 140.0, result.width)
+    sample_y = chart_coordinate(56.0, 104.0, result.height)
+    cmy = result.cmys.fetch((sample_y * result.width) + sample_x)
+    recipe = Lithop::Palette.new.nearest(cmy)
+
+    expect(cmy).to eq([0.2, 0.4, 0.4])
+    expect([recipe.cyan, recipe.magenta, recipe.yellow, recipe.white]).to eq([1, 3, 3, 0])
+  end
+
   it "preserves every CMY chart column at five-percent brightness" do
     chart_settings = Lithop::Settings.new(width: 140.0, height: 104.0, pixel_size: 1.0)
     result = Lithop::ImagePipeline.new(chart_settings).call("examples/cmy-color-chart.svg")

@@ -67,15 +67,15 @@ Alternatively, configure a RubyGems.org trusted publisher for this repository an
 bundle exec rake release
 ```
 
-After the tag exists on GitHub, create a GitHub Release and attach the exact gem that passed validation. Replace `0.3.0` for later versions:
+After the tag exists on GitHub, create a GitHub Release and attach the exact gem that passed validation. Replace `0.4.0` for later versions:
 
 ```sh
-gh release create v0.3.0 --verify-tag --generate-notes
+gh release create v0.4.0 --verify-tag --generate-notes
 ```
 
 Finally, install the published version in a clean environment and verify the CLI:
 
 ```sh
-gem install lithop -v 0.3.0
+gem install lithop -v 0.4.0
 lithop --version
 ```

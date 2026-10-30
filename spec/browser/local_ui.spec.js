@@ -28,8 +28,6 @@ async function startJob(page, file) {
 }
 
 async function openView(page, view) {
-  const menu = page.locator("#menu-toggle");
-  if (await menu.isVisible()) await menu.click();
   await page.locator(`#primary-navigation [data-view-target="${view}"]`).click();
   await expect(page.locator(`[data-app-view="${view}"]`)).toBeVisible();
 }
@@ -51,11 +49,23 @@ test.afterEach(async ({ page }, testInfo) => {
 
 test("keeps the selected image and settings while creating and reviewing a job", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator('select[name="pigment_order"]')).toHaveValue("yellow,magenta,cyan");
+  await expect(page.locator('select[name="pigment_order"] option')).toHaveCount(6);
+  await expect(page.locator("#settings-basic")).toContainText("色の積層順");
+  await expect(page.locator("#settings-yellow")).toContainText("Yellowへ混ぜる色");
+  await expect(page.locator("#settings-yellow")).toContainText("Yellow混色率");
+  await expect(page.locator("#settings-yellow")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#settings-yellow").locator('[name="pigment_order"]')).toHaveCount(0);
+  await expect(page.locator("#settings-adjustment").locator('[name="pigment_order"]')).toHaveCount(0);
   await page.locator("#image-input").setInputFiles(example);
   await expect(page.locator("#source-image")).toBeVisible();
   await expect(page.locator("#draft-state")).toContainText("反映済み");
 
   await page.locator("#brightness").fill("12");
+  await page.locator("#settings-yellow summary").click();
+  await page.locator("#yellow-mix-color").selectOption("magenta");
+  await page.locator("#yellow-mix-percent").fill("20");
+  await expect(page.locator("#draft-summary-values")).toContainText("Yellow→Magenta 20%");
   await page.locator("#submit-button").click();
 
   await expect(page).toHaveURL(/\?job=browser-job-\d+/);
@@ -73,6 +83,8 @@ test("keeps the selected image and settings while creating and reviewing a job",
   await page.getByRole("tab", { name: "プレビュー", exact: true }).click();
   await expect(page.locator("#image-input")).toHaveValue(/cmy-color-circle\.svg$/);
   await expect(page.locator("#brightness")).toHaveValue("12");
+  await expect(page.locator("#yellow-mix-color")).toHaveValue("magenta");
+  await expect(page.locator("#yellow-mix-percent")).toHaveValue("20");
 
   await page.getByRole("tab", { name: "厚み" }).click();
   await expect(page.locator("#result-caption")).toHaveText("厚み");
@@ -150,6 +162,9 @@ test("reports preview pipeline timing and reuses an identical server render", as
 
 test("shows common tile boundaries and dependent Z settings", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator('input[name="minimum_thickness"]')).toHaveValue("0.74");
+  await expect(page.locator('input[name="maximum_thickness"]')).toHaveValue("1.94");
+  await expect(page.locator('input[name="maximum_thickness"]')).toHaveAttribute("step", "0.01");
   await page.locator("details").filter({ hasText: "XYタイルとZプレート" }).locator("summary").click();
   await page.locator('input[name="tile_count"]').fill("2");
   await page.locator("#toggle-tile-overlay").check();
@@ -159,8 +174,9 @@ test("shows common tile boundaries and dependent Z settings", async ({ page }) =
   await expect(page.locator("#color-region-field")).toBeHidden();
   await page.locator("#separate-z-parts").check();
   await expect(page.locator("#color-region-field")).toBeVisible();
-  await expect(page.locator("#z-parts-summary")).toContainText("Top White 1プレート");
-  await expect(page.locator("#draft-summary-values")).toContainText("4プレート");
+  await expect(page.locator("#z-parts-summary"))
+    .toContainText("CMYW 8層・Base White 1層（Zプレート3は3層）付き・各プレート最小0.34 mm（実出力 3プレート）");
+  await expect(page.locator("#draft-summary-values")).toContainText("3プレート");
 });
 
 test("shows every split 3MF and its tile preview", async ({ page }) => {
@@ -313,7 +329,7 @@ test("links the tile overview to every model and shows its physical placement", 
   await mapTiles.nth(1).click();
   await expect(page.locator("#tile-card-tile_r01_c02")).toHaveClass(/is-selected/);
   await expect(page.locator("#tile-card-tile_r01_c02 > small")).toContainText("行1・列2");
-  await expect(page.locator("#tile-card-tile_r01_c02 > small")).toContainText("4プレート");
+  await expect(page.locator("#tile-card-tile_r01_c02 > small")).toContainText("3プレート");
   await expect(page.locator("#tile-card-tile_r01_c02 a")).toHaveAttribute("href", /tile_r01_c02\.3mf$/);
 });
 
@@ -483,11 +499,63 @@ test("uses a 1440 by 900 viewport as the minimum two-column layout", async ({ pa
     return {
       sameRow: Math.abs(editor.top - preview.top) < 1,
       editorBeforePreview: editor.right <= preview.left,
-      menuCollapsed: getComputedStyle(document.querySelector("#menu-toggle")).display !== "none",
+      topNavigation: getComputedStyle(document.querySelector("#primary-navigation")).display === "flex",
       pageFits: document.documentElement.scrollWidth <= window.innerWidth
     };
   });
-  expect(compactLayout).toEqual({ sameRow: true, editorBeforePreview: true, menuCollapsed: true, pageFits: true });
+  expect(compactLayout).toEqual({ sameRow: true, editorBeforePreview: true, topNavigation: true, pageFits: true });
+});
+
+test("fits planned responsive widths and a 200 percent equivalent viewport", async ({ page }) => {
+  const viewports = [
+    { width: 1024, height: 768, stacked: false },
+    { width: 600, height: 800, stacked: true },
+    { width: 390, height: 844, stacked: true },
+    { width: 720, height: 450, stacked: true }
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    const createLayout = await page.evaluate(() => {
+      const editor = document.querySelector(".editor-panel").getBoundingClientRect();
+      const preview = document.querySelector(".preview-panel").getBoundingClientRect();
+      return {
+        stacked: preview.top >= editor.bottom,
+        navigationVisible: getComputedStyle(document.querySelector("#primary-navigation")).display === "flex",
+        pageFits: document.documentElement.scrollWidth <= window.innerWidth
+      };
+    });
+    expect(createLayout).toEqual({ stacked: viewport.stacked, navigationVisible: true, pageFits: true });
+
+    await openView(page, "presets");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+});
+
+test("keeps conversion actions by the image picker and navigates setting sections", async ({ page }) => {
+  await page.goto("/");
+  const actionPlacement = await page.locator("#file-picker").evaluate((picker) => ({
+    nextClass: picker.nextElementSibling?.className,
+    oneSubmitButton: document.querySelectorAll('#conversion-form button[type="submit"]').length
+  }));
+  expect(actionPlacement).toEqual({ nextClass: "conversion-actions", oneSubmitButton: 1 });
+  await expect(page.locator("#submit-button")).toBeDisabled();
+
+  await page.locator('[data-settings-target="settings-yellow"]').click();
+  await expect(page.locator("#settings-yellow")).toHaveAttribute("open", "");
+  await expect(page.locator("#settings-yellow summary")).toBeFocused();
+  await expect(page.locator('[data-settings-target="settings-yellow"]')).toHaveAttribute("aria-current", "true");
+
+  await page.locator('[data-settings-target="settings-split"]').click();
+  await expect(page.locator("#settings-split")).toHaveAttribute("open", "");
+  await expect(page.locator("#settings-split summary")).toBeFocused();
+  await expect(page.locator('[data-settings-target="settings-split"]')).toHaveAttribute("aria-current", "true");
+
+  await openView(page, "presets");
+  await expect(page.getByRole("button", { name: "作成へ戻る" })).toHaveCount(0);
+  await expect(page.locator("#preset-load")).toHaveText("作成に適用");
+  await expect(page.locator("#draft-restore")).toHaveText("作成に適用");
 });
 
 test("supports a narrow keyboard workflow without external requests", async ({ page }) => {
@@ -500,12 +568,9 @@ test("supports a narrow keyboard workflow without external requests", async ({ p
   });
   await page.setViewportSize({ width: 600, height: 800 });
   await page.goto("/");
-  await page.locator("#menu-toggle").focus();
-  await expect(page.locator("#menu-toggle")).toBeFocused();
-  await page.locator("#menu-toggle").press("Enter");
+  await page.locator('#primary-navigation [data-view-target="create"]').focus();
+  await expect(page.locator('#primary-navigation [data-view-target="create"]')).toBeFocused();
   await expect(page.locator("#primary-navigation")).toBeVisible();
-  await page.locator("body").press("Escape");
-  await expect(page.locator("#menu-toggle")).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await startJob(page, example);
   await expect(page.locator("#job-state")).toHaveText("完了");
@@ -580,9 +645,15 @@ test("compares two completed jobs with synchronized preview choices and setting 
   await expect(page.locator("#compare-b-preview")).toBeVisible();
 });
 
-test("searches history, downloads a confirmed artifact ZIP, and bulk deletes final jobs", async ({ page }) => {
+test("selects all recent jobs and bulk deletes the selected jobs", async ({ page }, testInfo) => {
+  const inputName = `bulk-delete-${testInfo.project.name}-${Date.now()}.svg`;
+  const input = {
+    name: inputName,
+    mimeType: "image/svg+xml",
+    buffer: fs.readFileSync(example)
+  };
   await page.goto("/");
-  await startJob(page, example);
+  await startJob(page, input);
   await expect(page.locator("#job-state")).toHaveText("完了");
   const firstId = new URL(page.url()).searchParams.get("job");
   await openView(page, "create");
@@ -600,13 +671,32 @@ test("searches history, downloads a confirmed artifact ZIP, and bulk deletes fin
   ]);
   expect(download.suggestedFilename()).toContain("models.zip");
 
-  await page.locator("#history-query").fill(firstId);
-  await expect(page.locator("#job-list li")).toHaveCount(1);
-  await expect(page.locator("#job-list")).toContainText(firstId);
-  await page.locator("#history-query").fill("");
-  await expect(page.locator(`#job-list .history-select[data-job-id="${firstId}"]`)).toBeVisible();
-  await page.locator(`#job-list .history-select[data-job-id="${firstId}"]`).check();
-  await page.locator(`#job-list .history-select[data-job-id="${secondId}"]`).check();
+  await page.locator("#history-query").fill(inputName);
+  await expect(page.locator("#job-list li")).toHaveCount(2);
+  await page.locator("#select-all-jobs").click();
+  await expect(page.locator(`#job-list .history-select[data-job-id="${firstId}"]`)).toBeChecked();
+  await expect(page.locator(`#job-list .history-select[data-job-id="${secondId}"]`)).toBeChecked();
+  await expect(page.locator("#history-selection-status")).toContainText("2件選択");
+  await expect(page.locator("#select-all-jobs")).toHaveText("全ての選択を解除する");
+  await expect(page.locator("#delete-selected-jobs")).toBeEnabled();
+  const actionLayout = await page.evaluate(() => {
+    const selectAll = document.querySelector("#select-all-jobs").getBoundingClientRect();
+    const compare = document.querySelector("#compare-jobs").getBoundingClientRect();
+    const remove = document.querySelector("#delete-selected-jobs").getBoundingClientRect();
+    const toolbar = document.querySelector(".history-selection-toolbar");
+    return {
+      selectionBeforeActions: selectAll.bottom <= compare.top,
+      actionsShareRow: Math.abs(compare.top - remove.top) < 1,
+      actionsDoNotOverlap: compare.right <= remove.left,
+      toolbarFits: toolbar.scrollWidth <= toolbar.clientWidth
+    };
+  });
+  expect(actionLayout).toEqual({
+    selectionBeforeActions: true,
+    actionsShareRow: true,
+    actionsDoNotOverlap: true,
+    toolbarFits: true
+  });
   page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#delete-selected-jobs").click();
   await expect(page.locator("#history-selection-status")).toContainText("2件を削除しました");

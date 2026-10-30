@@ -6,7 +6,7 @@ RSpec.describe Lithop::Thickness do
   it "makes dense CMY pixels thicker and aligns every value to a layer boundary" do
     heights = described_class.from_cmy_density([0.0, 0.5, 1.0], settings)
 
-    expect(heights).to eq([1.0, 1.56, 2.14689422])
+    expect(heights).to eq([0.74, 1.38, 1.94])
   end
 
   it "rejects out-of-range CMY density" do
@@ -21,7 +21,7 @@ RSpec.describe Lithop::Thickness do
     )
 
     expect(described_class.from_cmy_density([0.2, 0.5, 0.8], settings)).to eq(
-      [1.0, 1.56, 2.14689422]
+      [0.74, 1.38, 1.94]
     )
   end
 
@@ -31,8 +31,8 @@ RSpec.describe Lithop::Thickness do
       width: 1.0, height: 1.0, grid_columns: 1, grid_rows: 1
     )
 
-    expect(described_class.continuous_from_density([0.2, 0.5, 0.8], settings)).to eq(
-      [1.0, 1.57344711, 2.14689422]
+    expect(described_class.continuous_from_density([0.2, 0.5, 0.8], settings)).to match(
+      [0.74, be_within(1e-12).of(1.34), 1.94]
     )
   end
 end

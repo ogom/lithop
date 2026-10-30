@@ -155,7 +155,7 @@ module Lithop
         content_type :json
         JSON.generate(
           tile_count: resolved.tile_count, tile_rows: layout.rows, tile_columns: layout.columns,
-          z_plate_count: resolved.separate_z_parts ? resolved.color_region_parts + 1 : 1
+          z_plate_count: resolved.separate_z_parts ? resolved.resolved_z_part_count : 1
         )
       rescue Error, SystemCallError => e
         halt 422, json_error(e.message)
@@ -360,10 +360,7 @@ module Lithop
       def prepare_page(submitted: nil)
         form = SettingsForm.new(project_dir: settings.project_dir)
         @values = form.values
-        if submitted
-          SettingsForm::FIELD_NAMES.each { |key| @values[key] = submitted[key] if submitted.key?(key) }
-          @values["separate_z_parts"] = submitted["separate_z_parts"] == "1"
-        end
+        apply_submitted_values(submitted) if submitted
         @jobs = settings.job_store.recent.map do |job|
           job.merge(settings.job_store.summary(job.fetch("job_id")))
         end
@@ -376,6 +373,13 @@ module Lithop
         @initial_view ||= "create"
         @project_name ||= File.basename(settings.project_dir)
         @csrf_token = settings.csrf_token
+      end
+
+      def apply_submitted_values(submitted)
+        SettingsForm::FIELD_NAMES.each { |key| @values[key] = submitted[key] if submitted.key?(key) }
+        SettingsForm::BOOLEAN_FIELDS.each do |key|
+          @values[key.to_s] = submitted[key.to_s] == "1"
+        end
       end
 
       def prepare_navigation

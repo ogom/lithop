@@ -29,7 +29,7 @@ bundle exec lithop --version
 
 **対処:** macOSでは`brew install rust`を実行し、`rustc --version`と`cargo --version`を確認してからLithopを再インストールします。ソースチェックアウトでは`bundle install`に続けて`bundle exec rake compile`を実行します。`lithop doctor`で`backend: rust`と拡張バージョンを確認できます。Ruby版との比較用に`LITHOP_DISABLE_NATIVE=1`を指定できますが、インストール時の拡張ビルドを省略する設定ではありません。
 
-現在のCI対象はmacOSとRuby 4.0で、実測環境はApple siliconです。他のOS、CPU、Ruby ABI向けのビルド済みgemは配布せず、0.3.0は利用環境でRust拡張をビルドするソースgemとして扱います。
+現在のCI対象はmacOSとRuby 4.0で、実測環境はApple siliconです。他のOS、CPU、Ruby ABI向けのビルド済みgemは配布せず、0.4.0は利用環境でRust拡張をビルドするソースgemとして扱います。
 
 ## 入力画像を読めない
 
@@ -67,9 +67,9 @@ bundle exec lithop --version
 
 **最初の確認:** 色領域の層数、第1層、通常レイヤー、要求最小・最大厚さを確認します。
 
-**原因候補:** 選択した層構造に、下地White、色領域、`top_white_start`までのWhite領域、設定された最小上部White層を収容できません。メッセージ中の最小値は現在の設定から計算されます。標準設定の`minimum_top_white_layers`は`0`です。
+**原因候補:** 選択した層構造に、下地White、色領域、`top_white_start`までのWhite領域、設定された最小上部White層を収容できません。メッセージ中の最小値は現在の設定から計算されます。標準設定の`minimum_top_white_layers`は`1`です。
 
-**対処:** `--min-thickness`または`--max-thickness`を必要最小厚さ以上にします。標準の7層構造では1.0 mmです。
+**対処:** `--min-thickness`または`--max-thickness`を必要最小厚さ以上にします。標準の7層構造では0.74 mmです。
 
 **関連:** [レイヤー境界と実効厚さ](config.md#レイヤー境界と実効厚さ)
 

@@ -32,12 +32,13 @@ module Lithop
 
     module_function
 
-    def call(rgb)
+    def call(rgb, mixtures: true)
       channels = rgb.map { |component| (component * 255).round.clamp(0, 255) }
       packed = channels.reduce(0) { |value, component| (value << 8) | component }
       return [[0.0, 0.0, 0.0], 0.0] if packed == 0xFFFFFF
       return [CMY_BLACK, CMY_BLACK_DENSITIES.fetch(packed)] if CMY_BLACK_DENSITIES.key?(packed)
       return [COLOR_CMYS.fetch(packed), 1.0] if COLOR_CMYS.key?(packed)
+      return unless mixtures
 
       match = closest_line(channels)
       return unless match && match.first <= MAXIMUM_ERROR

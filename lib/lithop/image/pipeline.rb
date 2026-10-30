@@ -5,13 +5,13 @@ module Lithop
   # rubocop:disable-next Metrics/ClassLength
   class ImagePipeline
     REFERENCE_WHITE_MAXIMUM_DENSITY = 0.04
-    REFERENCE_WHITE_MAXIMUM_CHROMA = 0.08
     REFERENCE_DARK_MAXIMUM_VALUE = 0.75
     REFERENCE_NEUTRAL_MAXIMUM_CHROMA = 0.25
     REFERENCE_BROWN_LINE_CMY_COVERAGE = 1.0 / 7
     Result = Data.define(
       :width, :height, :cmys, :cmy_densities, :white_densities, :color_cells, :corrected_preview_png
     )
+    LoadedImage = Data.define(:image, :material_display)
 
     def initialize(settings)
       @settings = settings
@@ -23,13 +23,14 @@ module Lithop
       require "vips"
 
       access = @settings.color_pixel_size ? :random : :sequential
-      image = normalized_image(path, access:)
+      loaded = normalized_image(path, access:)
+      image = loaded.image
       sampled = @placement.call(image, @settings.sampling_grid).cast(:uchar).copy_memory
 
       rgbs = rgb_components(sampled)
-      color_samples = rgbs.map { |rgb| color_sample(rgb) }
+      color_samples = rgbs.map { |rgb| color_sample(rgb, material_display: loaded.material_display) }
       result_color_cells = if @settings.color_pixel_size
-                             color_cells(image)
+                             color_cells(image, material_display: loaded.material_display)
                            else
                              standard_color_cells(color_samples, @settings.columns, @settings.rows)
                            end
@@ -38,7 +39,7 @@ module Lithop
         height: sampled.height,
         cmys: color_samples.map(&:first),
         cmy_densities: color_samples.map(&:last),
-        white_densities: rgbs.map { |rgb| white_density(rgb) },
+        white_densities: rgbs.map { |rgb| white_density(rgb, material_display: loaded.material_display) },
         color_cells: result_color_cells,
         corrected_preview_png: sampled.write_to_buffer(".png")
       )
@@ -52,8 +53,8 @@ module Lithop
       require "vips"
 
       grid = preview_grid(maximum_width:, maximum_height:)
-      image = normalized_image(path, access: :sequential, sampling_grids: [grid])
-      @placement.call(image, grid).cast(:uchar).write_to_buffer(".png")
+      loaded = normalized_image(path, access: :sequential, sampling_grids: [grid])
+      @placement.call(loaded.image, grid).cast(:uchar).write_to_buffer(".png")
     rescue SystemCallError, Vips::Error => e
       raise InputError, "could not read image: #{e.message}"
     end
@@ -61,19 +62,24 @@ module Lithop
     private
 
     def normalized_image(path, access:, sampling_grids: nil)
-      image = load_image(path, access:, sampling_grids:)
+      loaded = load_image(path, access:, sampling_grids:)
+      image = loaded.image
       image = image.autorot
       validate_input!(image)
       image = image.flatten(background: [255, 255, 255]) if image.has_alpha?
-      adjust_image(to_srgb(image))
+      LoadedImage.new(image: adjust_image(to_srgb(image)), material_display: loaded.material_display)
     end
 
     def load_image(path, access:, sampling_grids: nil)
       signature = File.binread(path, 8)
       raster = signature.start_with?("\xFF\xD8\xFF".b) || signature.start_with?("\x89PNG\r\n\x1A\n".b)
-      return Vips::Image.new_from_file(path.to_s, access:) if raster
+      if raster
+        image = Vips::Image.new_from_file(path.to_s, access:)
+        return LoadedImage.new(image:, material_display: false)
+      end
 
-      @svg_loader.call(path, access:, sampling_grids:)
+      result = @svg_loader.call(path, access:, sampling_grids:)
+      LoadedImage.new(image: result.image, material_display: result.material_display)
     end
 
     def preview_grid(maximum_width:, maximum_height:)
@@ -128,12 +134,12 @@ module Lithop
       [@settings.brightness, @settings.contrast, @settings.saturation]
     end
 
-    def color_cells(image)
+    def color_cells(image, material_display:)
       return if @settings.color_pixel_size.nil?
 
       grid = @settings.color_sampling_grid
       sampled = @placement.call(image, grid).cast(:uchar)
-      samples = rgb_components(sampled).map { |rgb| color_sample(rgb) }
+      samples = rgb_components(sampled).map { |rgb| color_sample(rgb, material_display:) }
       coarse_cells = standard_color_cells(samples, grid.columns, grid.rows)
       expand_color_cells(coarse_cells, grid)
     end
@@ -153,7 +159,7 @@ module Lithop
 
         density = samples.sum(&:last).fdiv(samples.length)
         cmy = samples.map(&:first).transpose.map { |components| components.sum.fdiv(components.length) }
-        next [0.0, 0.0, 0.0] if standard_white?(density, cmy)
+        next [0.0, 0.0, 0.0] if standard_white?(density)
 
         cmy
       end
@@ -190,14 +196,26 @@ module Lithop
       end
     end
 
-    def color_sample(rgb)
-      display_sample = FilamentProfile.display_sample(rgb)
-      return [display_sample.cmy, display_sample.density] if display_sample
+    def color_sample(rgb, material_display:)
+      display_sample = FilamentProfile.display_sample(rgb, mixtures: material_display)
+      return [mix_yellow(display_sample.cmy), display_sample.density] if display_sample
 
       maximum = rgb.max
-      cmy = standard_cmy(rgb, maximum)
+      cmy = mix_yellow(standard_cmy(rgb, maximum))
       density = rgb.sum { |component| 1.0 - component }.fdiv(3)
       [cmy, density]
+    end
+
+    def mix_yellow(cmy)
+      ratio = @settings.yellow_mix_percent.fdiv(100)
+      return cmy if ratio.zero? || cmy.fetch(2).zero?
+
+      mixed = cmy.dup
+      replacement = mixed.fetch(2) * ratio
+      mixed[2] -= replacement
+      index = @settings.yellow_mix_color == "cyan" ? 0 : 1
+      mixed[index] = [mixed.fetch(index) + replacement, 1.0].min
+      mixed
     end
 
     def standard_cmy(rgb, maximum)
@@ -212,20 +230,16 @@ module Lithop
       cmy.all? { |component| (component - REFERENCE_BROWN_LINE_CMY_COVERAGE).abs < 1e-12 }
     end
 
-    def standard_white?(density, cmy)
-      return false if density > REFERENCE_WHITE_MAXIMUM_DENSITY
-
-      pale_yellow = cmy.fetch(2) == cmy.max && cmy.fetch(2) > REFERENCE_WHITE_MAXIMUM_CHROMA &&
-                    cmy.fetch(0) <= 0.05
-      !pale_yellow
+    def standard_white?(density)
+      @settings.suppress_pale_colors && density <= REFERENCE_WHITE_MAXIMUM_DENSITY
     end
 
     def rec601_density(rgb)
       1.0 - rgb.zip([0.299, 0.587, 0.114]).sum { |component, weight| component * weight }
     end
 
-    def white_density(rgb)
-      FilamentProfile.display_sample(rgb)&.density || rec601_density(rgb)
+    def white_density(rgb, material_display:)
+      FilamentProfile.display_sample(rgb, mixtures: material_display)&.density || rec601_density(rgb)
     end
   end
 end
